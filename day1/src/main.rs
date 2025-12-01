@@ -1,6 +1,5 @@
 
 use std::fs;
-use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 struct Answer {
@@ -47,21 +46,28 @@ fn do_rotation_part2(current_loc: i32, zero_count: i32, direction: char, number:
     let mut current_loc: i32 = current_loc;
     let mut zero_count: i32 = zero_count;
 
+    let change;
+
     if direction == 'R' {
-        current_loc += number;
-
-        while current_loc > 99 {
-            current_loc -= 100;
-            zero_count += 1;
-            println!("*Passed 0 for R*");
-        }
+        change = 1;
     } else {
-        current_loc -= number;
+        change = -1;
+    }
 
-        while current_loc < 0 {
-            current_loc += 100;
+    for _ in 0..number {
+        current_loc += change;
+
+        match current_loc {
+            100 => {
+                current_loc = 0;
+            }
+            -1 => current_loc = 99,
+            _ => (),
+        }
+        
+        if current_loc == 0 {
+            println!("Added one to the zero count");
             zero_count += 1;
-            println!("*Passed 0 for L*");
         }
 
     }
@@ -97,14 +103,16 @@ fn part2(contents: &String) -> Option<Answer> {
     let mut zero_count: i32 = 0;
 
     for line in contents.lines() {
+        println!("----");
         println!("Line is {line}");
         let direction = line.to_string().chars().nth(0).expect("Expected first letter");
         let number = line.to_string()[1..].parse().expect("Expected a number");
         println!("{current_loc}, {direction}, {number}");
         (current_loc, zero_count) = do_rotation_part2(current_loc, zero_count, direction, number);
-        if current_loc == 0 {
-            zero_count += 1;
-        }
+        // if current_loc == 0 {
+        //     zero_count += 1;
+        //     println!("Ended up at 0, so adding 1");
+        // }
     }
     Some(Answer{ answer: zero_count})
 
