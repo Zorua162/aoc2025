@@ -1,6 +1,4 @@
-
 use std::fs;
-use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 struct Answer {
@@ -23,6 +21,7 @@ impl InputGetter for LocalFileInputGetter {
 }
 
 fn part1(contents: &String) -> Option<Answer> {
+    println!("Contents is {contents}");
     None
 
 }
@@ -30,6 +29,7 @@ fn part1(contents: &String) -> Option<Answer> {
 // Attempted answers
 
 fn part2(contents: &String) -> Option<Answer> {
+    println!("Contents is {contents}");
     None
 
 }

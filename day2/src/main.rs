@@ -1,5 +1,4 @@
-use std::{fs, string};
-use std::collections::HashMap;
+use std::{fs};
 
 #[derive(Debug, PartialEq)]
 struct Answer {
