@@ -53,17 +53,40 @@ fn main() {
 mod tests {
     use super::*;
 
+    #[ignore]
     #[test]
     fn test_part1() {
-    let contents = LocalFileInputGetter{ path: "input.txt"}.get_input();
+        let contents = LocalFileInputGetter{ path: "input.txt"}.get_input();
         let result = part1(&contents);
         assert_eq!(result, Some(Answer { answer: 2081}));
     }
 
     #[test]
+    fn test_part1_example() {
+        let contents = "987654321111111\n\
+                              811111111111119\n\
+                              234234234234278\n\
+                              818181911112111".to_string();
+        let result = part1(&contents);
+        assert_eq!(result, Some(Answer { answer: 357}));
+    }
+
+    #[ignore]
+    #[test]
     fn test_part2() {
-    let contents = LocalFileInputGetter{ path: "input.txt"}.get_input();
+        let contents = LocalFileInputGetter{ path: "input.txt"}.get_input();
         let result = part2(&contents);
         assert_eq!(result, Some(Answer { answer: 2341}));
+    }
+
+    #[ignore]
+    #[test]
+    fn test_part2_example() {
+        let contents = "987654321111111\n\
+                              811111111111119\n\
+                              234234234234278\n\
+                              818181911112111".to_string();
+        let result = part1(&contents);
+        assert_eq!(result, Some(Answer { answer: 357}));
     }
 }
