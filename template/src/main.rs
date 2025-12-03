@@ -42,8 +42,11 @@ fn main() {
     let result1 = part1(&contents);
     println!("Part1 result {result1:?}");
 
-    let result2 = part2(&contents);
-    println!("Part2 result {result2:?}");
+    let doing_part2 = false;
+    if doing_part2 {
+        let result2 = part2(&contents);
+        println!("Part2 result {result2:?}");
+    }
 
 }
 
