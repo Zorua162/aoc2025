@@ -49,7 +49,7 @@ fn check_loc_adjacent(location: Location, roll_data: &Vec<Vec<char>>) -> bool {
 
         if let Some(line) = roll_data.get(xindex as usize) {
             if let Some(val) = line.get(yindex as usize) {
-                if val == &'@' || val == &'x' {
+                if val == &'@' {
                     roll_count += 1;
                 }
             }
@@ -59,9 +59,35 @@ fn check_loc_adjacent(location: Location, roll_data: &Vec<Vec<char>>) -> bool {
     return roll_count < 4;
 }
 
-fn part1(contents: &String) -> Option<Answer> {
-    println!("Contents is {contents}");
+fn remove_rolls(roll_data: Vec<Vec<char>>, answer: &mut i32) -> (Vec<Vec<char>>, i32) {
+    let mut updated_roll_data = roll_data.clone();
 
+    if let Some(first_line) = roll_data.iter().next() {
+        for (i, _) in roll_data.iter().enumerate() {
+            for (j, _) in first_line.iter().enumerate() {
+                if roll_data[i][j] == '@'
+                    && check_loc_adjacent(
+                        Location {
+                            x: i as i32,
+                            y: j as i32,
+                        },
+                        &roll_data,
+                    )
+                {
+                    // let row= roll_data.get_mut(i).expect("Expecting a row here");
+                    // let mut value = row.get_mut(j).expect("Expecting a value here");
+                    // value = &mut 'x';
+
+                    updated_roll_data[i][j] = 'x';
+                    *answer += 1;
+                }
+            }
+        }
+    }
+    return (updated_roll_data, *answer);
+}
+
+fn part1(contents: &String) -> Option<Answer> {
     let mut answer = 0;
 
     let mut roll_data: Vec<Vec<char>> = contents
@@ -69,49 +95,55 @@ fn part1(contents: &String) -> Option<Answer> {
         .map(|line| line.chars().collect())
         .collect();
 
-    if let Some(first_line) = contents.lines().next() {
-        for (i, _) in contents.lines().enumerate() {
-            for (j, _) in first_line.chars().enumerate() {
-                if roll_data[i][j] == '@' && check_loc_adjacent(
-                    Location {
-                        x: i as i32,
-                        y: j as i32,
-                    },
-                    &roll_data,
-                ) {
-                    // let row= roll_data.get_mut(i).expect("Expecting a row here");
-                    // let mut value = row.get_mut(j).expect("Expecting a value here");
-                    // value = &mut 'x';
-
-                    roll_data[i][j] = 'x';
-                    answer += 1;
-                }
-            }
-        }
-    }
+    (roll_data, answer) = remove_rolls(roll_data, &mut answer);
 
     // Useful tool for looking at what is in a 2d vector!
     // dbg!(roll_data.iter().map(|line| line.iter().collect::<String>()).collect::<Vec<String>>());
 
-    Some(Answer { answer })
+    Some(Answer {
+        answer: answer as usize,
+    })
 }
 
 // Attempted answers
 
 fn part2(contents: &String) -> Option<Answer> {
-    println!("Contents is {contents}");
-    None
+    let mut answer = 0;
+    let mut last_answer = -1;
+    let mut roll_data: Vec<Vec<char>> = contents
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect();
+
+    while last_answer != answer {
+        last_answer = answer;
+
+        (roll_data, answer) = remove_rolls(roll_data, &mut answer);
+
+        dbg!(
+            roll_data
+                .iter()
+                .map(|line| line.iter().collect::<String>())
+                .collect::<Vec<String>>()
+        );
+        println!("answer {answer} last_answer {last_answer}")
+    }
+
+    Some(Answer {
+        answer: answer as usize,
+    })
 }
 
 // Attempted answers
 
 fn main() {
     let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
-    let result1 = part1(&contents);
-    println!("Part1 result {result1:?}");
 
-    let doing_part2 = false;
-    if doing_part2 {
+    let doing_part1 = false;
+    if doing_part1 {
+        let result1 = part1(&contents);
+        println!("Part1 result {result1:?}");
+    } else {
         let result2 = part2(&contents);
         println!("Part2 result {result2:?}");
     }
@@ -122,6 +154,36 @@ fn main() {
 mod tests {
     use super::*;
 
+    struct Setup {
+        contents: String,
+    }
+
+    impl Setup {
+        fn new() -> Self {
+            Self {
+                contents: "..@@.@@@@.\n\
+                            @@@.@.@.@@\n\
+                            @@@@@.@.@@\n\
+                            @.@@@@..@.\n\
+                            @@.@@@@.@@\n\
+                            .@@@@@@@.@\n\
+                            .@.@.@.@@@\n\
+                            @.@@@.@@@@\n\
+                            .@@@@@@@@.\n\
+                            @.@.@@@.@."
+                    .to_string(),
+            }
+        }
+    }
+
+    #[test]
+    fn test_part1_example() {
+        let setup = Setup::new();
+        let contents = &setup.contents;
+        let result = part1(&contents);
+        assert_eq!(result, Some(Answer { answer: 13 }));
+    }
+
     #[test]
     fn test_part1() {
         let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
@@ -130,39 +192,17 @@ mod tests {
     }
 
     #[test]
-    fn test_part1_example() {
-        let contents = "..@@.@@@@.\n\
-                                @@@.@.@.@@\n\
-                                @@@@@.@.@@\n\
-                                @.@@@@..@.\n\
-                                @@.@@@@.@@\n\
-                                .@@@@@@@.@\n\
-                                .@.@.@.@@@\n\
-                                @.@@@.@@@@\n\
-                                .@@@@@@@@.\n\
-                                @.@.@@@.@."
-            .to_string();
-        let result = part1(&contents);
-        assert_eq!(result, Some(Answer { answer: 13 }));
+    fn test_part2_example() {
+        let setup = Setup::new();
+        let contents = &setup.contents;
+        let result = part2(&contents);
+        assert_eq!(result, Some(Answer { answer: 43 }));
     }
 
-    #[ignore]
     #[test]
     fn test_part2() {
         let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
         let result = part2(&contents);
-        assert_eq!(result, Some(Answer { answer: 2341 }));
-    }
-
-    #[ignore]
-    #[test]
-    fn test_part2_example() {
-        let contents = "987654321111111\n\
-                              811111111111119\n\
-                              234234234234278\n\
-                              818181911112111"
-            .to_string();
-        let result = part2(&contents);
-        assert_eq!(result, Some(Answer { answer: 357 }));
+        assert_eq!(result, Some(Answer { answer: 8451 }));
     }
 }
