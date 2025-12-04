@@ -148,6 +148,7 @@ fn twelve_highest_scanner(line: &str) -> Result<usize, &'static str> {
     let mut on_locations: Vec<bool> = vec![false; line.len()];
 
     let mut largest_number_loc: i32 = 0;
+    let mut next_largest_number_loc: i32 = 0;
 
     let line_numbers: Vec<u32> = line
         .chars()
@@ -155,22 +156,23 @@ fn twelve_highest_scanner(line: &str) -> Result<usize, &'static str> {
         .collect();
 
     for i in (1..10).rev() {
-        // println!("trying {i} indexes {on_locations:?}");
+        println!("trying {i} indexes {on_locations:?}");
         // let mut pointer: usize = line_numbers.len().try_into().expect("Expected i32 here");
         let mut pointer = line_numbers.len();
 
+        // TODO: In the example line 3 for some reason the pointer "largest_number_loc" isn't blocking that extra 3 from being put in!!
         while i32::try_from(pointer).expect("i32") > largest_number_loc {
-            // println!("pointer {pointer} largest_number_loc {largest_number_loc}");
+            println!("pointer {pointer} largest_number_loc {largest_number_loc}");
             pointer -= 1;
             if line_numbers[pointer] == i {
                 on_locations[pointer] = true;
+                next_largest_number_loc = pointer as i32;
             }
             if on_location_count(&on_locations) >= 12 {
                 return Ok(on_locations_to_value(on_locations, line_numbers))
             }
         }
-        largest_number_loc = pointer.try_into().expect("i32");
-
+        largest_number_loc = next_largest_number_loc;
 
     }
 
@@ -218,7 +220,7 @@ fn part2(contents: &String) -> Option<Answer> {
     for line in contents.lines() {
         let out = twelve_highest_scanner(line);
         if out.is_err() {
-            panic!("Out value from line was an error");
+            panic!("Out value from line raised an error");
         }
         let value = out.expect("Value here");
         println!("value is {value}");
