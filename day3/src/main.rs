@@ -176,6 +176,9 @@ fn twelve_highest_scanner(line: &str) -> Result<usize, &'static str> {
 
     }
 
+    let out_value = on_locations_to_value(on_locations, line_numbers);
+    println!("Value ended up being {out_value}");
+
     Err("All 12 values were not found")
 }
 
