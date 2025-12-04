@@ -154,13 +154,13 @@ fn twelve_highest_scanner(line: &str) -> Result<usize, &'static str> {
         .map(|n| n.to_digit(10).expect("Expected a digit here"))
         .collect();
 
-    for i in (1..9).rev() {
-        println!("trying {i} indexes {on_locations:?}");
+    for i in (1..10).rev() {
+        // println!("trying {i} indexes {on_locations:?}");
         // let mut pointer: usize = line_numbers.len().try_into().expect("Expected i32 here");
         let mut pointer = line_numbers.len();
 
         while i32::try_from(pointer).expect("i32") > largest_number_loc {
-            println!("pointer {pointer} largest_number_loc {largest_number_loc}");
+            // println!("pointer {pointer} largest_number_loc {largest_number_loc}");
             pointer -= 1;
             if line_numbers[pointer] == i {
                 on_locations[pointer] = true;
