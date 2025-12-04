@@ -156,7 +156,7 @@ fn twelve_highest_scanner(line: &str) -> Result<usize, &'static str> {
         .collect();
 
     for i in (1..10).rev() {
-        println!("trying {i} indexes {on_locations:?}");
+        println!("trying {i} on_locations are {on_locations:?}");
         // let mut pointer: usize = line_numbers.len().try_into().expect("Expected i32 here");
         let mut pointer = line_numbers.len();
 
