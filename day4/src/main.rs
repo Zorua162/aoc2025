@@ -20,9 +20,57 @@ impl InputGetter for LocalFileInputGetter {
     }
 }
 
+struct Location {
+    x: usize,
+    y: usize 
+}
+
+fn check_loc_adjacent(location: Location, roll_data: &Vec<Vec<char>>) -> bool {
+
+    // Search in 3x3 pattern around the roll to count how many rolls are there
+    let mut roll_count = 0;
+
+    // ...
+    // .@.
+    // ...
+
+    let directions: [(i32, i32); 8] = [(-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0)];
+
+    for direction in directions {
+
+        let index = location.x.checked_sub(direction.0).unwrap();
+
+        roll_data.get(index);
+
+
+
+    }
+
+    return roll_count < 4;
+
+}
+
 fn part1(contents: &String) -> Option<Answer> {
     println!("Contents is {contents}");
-    None
+
+    let mut answer = 0;
+
+    let roll_data: Vec<Vec<char>> = contents.lines().map(|line| line.chars().collect()).collect();
+
+    if let Some(first_line) = contents.lines().next() {
+        for (i, _) in contents.lines().enumerate() {
+            for (j, _) in first_line.chars().enumerate() {
+                if check_loc_adjacent(Location { x: i, y: j }, &roll_data) {
+                    answer += 1;
+                }
+
+            }
+
+        }
+
+    }
+
+    Some(Answer { answer })
 
 }
 
