@@ -42,12 +42,14 @@ fn main() {
     let result1 = part1(&contents);
     println!("Part1 result {result1:?}");
 
-    let doing_part2 = false;
-    if doing_part2 {
+    let doing_part1 = true;
+    if doing_part1 {
+        let result1 = part1(&contents);
+        println!("Part1 result {result1:?}");
+    } else {
         let result2 = part2(&contents);
         println!("Part2 result {result2:?}");
     }
-
 }
 
 
@@ -56,40 +58,58 @@ fn main() {
 mod tests {
     use super::*;
 
-    #[ignore]
-    #[test]
-    fn test_part1() {
-        let contents = LocalFileInputGetter{ path: "input.txt"}.get_input();
-        let result = part1(&contents);
-        assert_eq!(result, Some(Answer { answer: 2081}));
+    struct Setup {
+        contents: String,
+    }
+
+    impl Setup {
+        fn new() -> Self {
+            Self {
+                contents: "..@@.@@@@.\n\
+                            @@@.@.@.@@\n\
+                            @@@@@.@.@@\n\
+                            @.@@@@..@.\n\
+                            @@.@@@@.@@\n\
+                            .@@@@@@@.@\n\
+                            .@.@.@.@@@\n\
+                            @.@@@.@@@@\n\
+                            .@@@@@@@@.\n\
+                            @.@.@@@.@."
+                .to_string(), 
+            }
+        }
     }
 
     #[test]
     fn test_part1_example() {
-        let contents = "987654321111111\n\
-                              811111111111119\n\
-                              234234234234278\n\
-                              818181911112111".to_string();
+        let setup = Setup::new();
+        let contents = &setup.contents;
         let result = part1(&contents);
-        assert_eq!(result, Some(Answer { answer: 357}));
+        assert_eq!(result, Some(Answer { answer: 13 }));
     }
 
     #[ignore]
     #[test]
-    fn test_part2() {
-        let contents = LocalFileInputGetter{ path: "input.txt"}.get_input();
-        let result = part2(&contents);
-        assert_eq!(result, Some(Answer { answer: 2341}));
+    fn test_part1() {
+        let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
+        let result = part1(&contents);
+        assert_eq!(result, Some(Answer { answer: 1395 }));
     }
 
     #[ignore]
     #[test]
     fn test_part2_example() {
-        let contents = "987654321111111\n\
-                              811111111111119\n\
-                              234234234234278\n\
-                              818181911112111".to_string();
+        let setup = Setup::new();
+        let contents = &setup.contents;
         let result = part2(&contents);
-        assert_eq!(result, Some(Answer { answer: 357}));
+        assert_eq!(result, Some(Answer { answer: 43 }));
+    }
+
+    #[ignore]
+    #[test]
+    fn test_part2() {
+        let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
+        let result = part2(&contents);
+        assert_eq!(result, Some(Answer { answer: 2341 }));
     }
 }
