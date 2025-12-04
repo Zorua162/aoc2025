@@ -1,4 +1,4 @@
-use std::{fs, ptr::read_volatile};
+use std::{fs};
 
 #[derive(Debug, PartialEq)]
 struct Answer {
