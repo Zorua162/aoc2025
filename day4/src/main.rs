@@ -1,4 +1,4 @@
-use std::{fs};
+use std::fs;
 
 #[derive(Debug, PartialEq)]
 struct Answer {
