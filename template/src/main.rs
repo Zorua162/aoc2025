@@ -26,7 +26,7 @@ fn part1(contents: &String) -> Option<Answer> {
 
 }
 
-// Attempted answers
+// Part 1 attempted answers
 
 fn part2(contents: &String) -> Option<Answer> {
     println!("Contents is {contents}");
@@ -34,7 +34,7 @@ fn part2(contents: &String) -> Option<Answer> {
 
 }
 
-// Attempted answers
+// Part 2 attempted answers
 
 fn main() {
 
