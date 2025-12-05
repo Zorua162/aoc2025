@@ -19,7 +19,7 @@ impl InputGetter for LocalFileInputGetter {
     }
 }
 
-#[derive(Debug, PartialEq, )]
+#[derive(Debug, PartialEq)]
 struct IDRange {
     start: u64,
     end: u64,
@@ -105,12 +105,11 @@ fn deoverlap_id_ranges(mut fresh_ingredients_ranges: Vec<IDRange>) -> Vec<IDRang
 
     let mut pointer = 0;
 
-
     for range in &fresh_ingredients_ranges {
         let mut out_start = range.start;
 
         if pointer >= range.end {
-            continue
+            continue;
         }
 
         if range.check_in_range(pointer) {
@@ -119,7 +118,10 @@ fn deoverlap_id_ranges(mut fresh_ingredients_ranges: Vec<IDRange>) -> Vec<IDRang
 
         pointer = range.end;
 
-        let new_range = IDRange{ start: out_start, end: range.end };
+        let new_range = IDRange {
+            start: out_start,
+            end: range.end,
+        };
         // if new_range.start < new_range.end {
         //     out_ranges.push(new_range);
         // }
@@ -204,16 +206,16 @@ mod tests {
                                 3-9\n\
                                 8-11\n\n\
                                 1\n\
-                                2".to_string();
+                                2"
+        .to_string();
         let result = part2(&contents);
         assert_eq!(result, Some(Answer { answer: 11 }));
     }
 
-    #[ignore]
     #[test]
     fn test_part2() {
         let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
         let result = part2(&contents);
-        assert_eq!(result, Some(Answer { answer: 2341 }));
+        assert_eq!(result, Some(Answer { answer: 350939902751909 }));
     }
 }
