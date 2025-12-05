@@ -255,11 +255,10 @@ mod tests {
         assert_eq!(value, 977222243323);
     }
 
-    #[ignore]
     #[test]
     fn test_part2() {
         let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
         let result = part2(&contents);
-        assert_eq!(result, Some(Answer { answer: 2341 }));
+        assert_eq!(result, Some(Answer { answer: 170449335646486 }));
     }
 }
