@@ -2,7 +2,7 @@ use std::fs;
 
 #[derive(Debug, PartialEq)]
 struct Answer {
-    answer: usize
+    answer: u64
 }
 
 trait InputGetter {
