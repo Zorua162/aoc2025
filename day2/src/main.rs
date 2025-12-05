@@ -176,11 +176,10 @@ mod tests {
         assert_eq!(result, Some(Answer { answer: 4174379265}));
     }
 
-    #[ignore]
     #[test]
     fn test_part2() {
     let contents = LocalFileInputGetter{ path: "input.txt"}.get_input();
         let result = part2(&contents);
-        assert_eq!(result, Some(Answer { answer: 2341}));
+        assert_eq!(result, Some(Answer { answer: 54486209192}));
     }
 }
