@@ -36,7 +36,7 @@ fn part1(contents: &String) -> Option<Answer> {
     let mut expressions: Vec<String> = vec!["".to_string(); first_line.len()];
 
     for (i, _) in first_line.iter().enumerate().step_by(2) {
-        for line in &data[..data.len()-2] {
+        for line in &data[..data.len()-1] {
             expressions[i] += line[i];
             expressions[i] += data[data.len()-1][i];
         }
@@ -46,9 +46,16 @@ fn part1(contents: &String) -> Option<Answer> {
 
     for expression in expressions {
         let string_expression = expression.to_string();
-        let eval_expression = &string_expression[..string_expression.len()-2];
+        if &string_expression == "" {
+            continue;
+        }
+        dbg!(&string_expression);
+        // let eval_expression = &string_expression[..string_expression.len()-2];
+        let eval_expression = &string_expression;
         dbg!(eval_expression);
-        answer += eval(eval_expression).expect("Expected a value here").as_f64().expect("Expected a float here");
+        let out = eval(eval_expression).expect("Expected a value here").as_f64().expect("Expected a float here");
+        dbg!(out);
+        answer += out;
     }
 
     dbg!(answer);
@@ -60,6 +67,7 @@ fn part1(contents: &String) -> Option<Answer> {
 }
 
 // Part 1 attempted answers
+// 566612075051 too low
 
 fn part2(contents: &String) -> Option<Answer> {
     println!("Contents is {contents}");
@@ -113,7 +121,7 @@ mod tests {
         let setup = Setup::new();
         let contents = &setup.contents;
         let result = part1(&contents);
-        assert_eq!(result, Some(Answer { answer: 13 }));
+        assert_eq!(result, Some(Answer { answer: 4277556 }));
     }
 
     #[ignore]
