@@ -35,7 +35,7 @@ fn part1(contents: &String) -> Option<Answer> {
 
     let mut expressions: Vec<String> = vec!["".to_string(); first_line.len()];
 
-    for (i, _) in first_line.iter().enumerate().step_by(2) {
+    for (i, _) in first_line.iter().enumerate() {
         for line in &data[..data.len()-1] {
             expressions[i] += line[i];
             expressions[i] += data[data.len()-1][i];
@@ -50,8 +50,7 @@ fn part1(contents: &String) -> Option<Answer> {
             continue;
         }
         dbg!(&string_expression);
-        // let eval_expression = &string_expression[..string_expression.len()-2];
-        let eval_expression = &string_expression;
+        let eval_expression = &string_expression[..string_expression.len()-1];
         dbg!(eval_expression);
         let out = eval(eval_expression).expect("Expected a value here").as_f64().expect("Expected a float here");
         dbg!(out);
@@ -109,7 +108,7 @@ mod tests {
             Self {
                 contents: "123 328  51 64\n\
                             45 64  387 23\n\
-                             6 98  215 31\n\
+                             6 98  215 314\n\
                            *   +   *   +  "
                 .to_string(), 
             }
@@ -121,18 +120,18 @@ mod tests {
         let setup = Setup::new();
         let contents = &setup.contents;
         let result = part1(&contents);
+
+        dbg!(eval("123*45*6*").expect("Expected value").as_f64().expect("Expected float"));
         assert_eq!(result, Some(Answer { answer: 4277556 }));
     }
 
-    #[ignore]
     #[test]
     fn test_part1() {
         let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
         let result = part1(&contents);
-        assert_eq!(result, Some(Answer { answer: 1395 }));
+        assert_eq!(result, Some(Answer { answer: 6503327062445 }));
     }
 
-    #[ignore]
     #[test]
     fn test_part2_example() {
         let setup = Setup::new();
