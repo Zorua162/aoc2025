@@ -21,26 +21,13 @@ impl InputGetter for LocalFileInputGetter {
     }
 }
 
-fn parse_data(contents: &String) -> Vec<Vec<&str>> {
+fn parse_data_part1(contents: &String) -> Vec<Vec<&str>> {
     let line_data: Vec<Vec<&str>> = contents.lines().map(|line| line.split(" ").filter(|x| *x != "").collect()).collect();
     return line_data
 }
 
-fn part1(contents: &String) -> Option<Answer> {
+fn do_expressions(expressions: Vec<String>) -> u64 {
     let mut answer = 0.0;
-
-    let data = parse_data(contents);
-
-    let first_line = data.get(0).expect("Expected a line here");
-
-    let mut expressions: Vec<String> = vec!["".to_string(); first_line.len()];
-
-    for (i, _) in first_line.iter().enumerate() {
-        for line in &data[..data.len()-1] {
-            expressions[i] += line[i];
-            expressions[i] += data[data.len()-1][i];
-        }
-    }
 
     dbg!(&expressions);
 
@@ -60,19 +47,47 @@ fn part1(contents: &String) -> Option<Answer> {
     dbg!(answer);
 
     let answer_64 = answer.round() as u64;
+    
+    return answer_64
 
-    return Some(Answer { answer: answer_64 })
+}
+
+fn part1(contents: &String) -> Option<Answer> {
+    let data = parse_data_part1(contents);
+
+    let first_line = data.get(0).expect("Expected a line here");
+
+    let mut expressions: Vec<String> = vec!["".to_string(); first_line.len()];
+
+    for (i, _) in first_line.iter().enumerate() {
+        for line in &data[..data.len()-1] {
+            expressions[i] += line[i];
+            expressions[i] += data[data.len()-1][i];
+        }
+    }
+
+    dbg!(&expressions);
+
+    return Some(Answer { answer: do_expressions(expressions)})
 
 }
 
 // Part 1 attempted answers
 // 566612075051 too low
 
-fn part2(contents: &String) -> Option<Answer> {
-    println!("Contents is {contents}");
-    let answer = 0;
+fn parse_data_part2(contents: &String) -> Vec<Vec<&str>> {
+    let line_data: Vec<Vec<&str>> = contents.lines().map(|line| line.split(" ").filter(|x| *x != "").collect()).collect();
+    return line_data
+}
 
-    return Some(Answer { answer })
+
+fn part2(contents: &String) -> Option<Answer> {
+    let data = parse_data_part2(contents);
+
+    let mut expressions: Vec<String> = vec![];
+
+    return Some(Answer { answer: do_expressions(expressions)})
+
 }
 
 // Part 2 attempted answers
@@ -137,7 +152,7 @@ mod tests {
         let setup = Setup::new();
         let contents = &setup.contents;
         let result = part2(&contents);
-        assert_eq!(result, Some(Answer { answer: 43 }));
+        assert_eq!(result, Some(Answer { answer: 3263827 }));
     }
 
     #[ignore]
