@@ -97,7 +97,6 @@ fn parse_data_part2(contents: &String) -> (Vec<Vec<String>>, Vec<String>) {
     let mut values: Vec<String> = vec![];
 
     for i in (0..first_line.len()).rev() {
-
         let mut current_value = "".to_string();
 
         for line in &string_lines[..string_lines.len() - 1] {
@@ -117,7 +116,7 @@ fn parse_data_part2(contents: &String) -> (Vec<Vec<String>>, Vec<String>) {
     dbg!(&values);
 
     for value in values {
-        if value.chars().filter(|c| *c == ' ').count() == value.len()  {
+        if value.chars().filter(|c| *c == ' ').count() == value.len() {
             out_data.push(current_line);
             current_line = vec![];
         } else {
@@ -134,7 +133,10 @@ fn parse_data_part2(contents: &String) -> (Vec<Vec<String>>, Vec<String>) {
         .split(" ")
         .filter(|x| *x != "")
         .map(|x| x.to_string())
-        .collect::<Vec<String>>().into_iter().rev().collect();
+        .collect::<Vec<String>>()
+        .into_iter()
+        .rev()
+        .collect();
 
     dbg!(&out_data);
 
@@ -143,12 +145,10 @@ fn parse_data_part2(contents: &String) -> (Vec<Vec<String>>, Vec<String>) {
 }
 
 fn part2(contents: &String) -> Option<Answer> {
-    let (data, signs)= parse_data_part2(contents);
-
+    let (data, signs) = parse_data_part2(contents);
 
     // Expresions is a Vector where each item is a String that is a expression which is ready to parse
     let mut expressions: Vec<String> = vec![];
-
 
     for (i, line) in data.iter().enumerate() {
         let mut expression = "".to_string();
@@ -244,6 +244,11 @@ mod tests {
     fn test_part2() {
         let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
         let result = part2(&contents);
-        assert_eq!(result, Some(Answer { answer: 9640641878593 }));
+        assert_eq!(
+            result,
+            Some(Answer {
+                answer: 9640641878593
+            })
+        );
     }
 }
