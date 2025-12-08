@@ -39,14 +39,14 @@ fn part2(contents: &String) -> Option<Answer> {
 fn main() {
 
     let contents = LocalFileInputGetter{ path: "input.txt"}.get_input();
-    let result1 = part1(&contents);
-    println!("Part1 result {result1:?}");
-
-    let doing_part1 = true;
-    if doing_part1 {
+    let do_part1= true;
+    let do_part2= false;
+    if do_part1 {
         let result1 = part1(&contents);
         println!("Part1 result {result1:?}");
-    } else {
+    } 
+    
+    if do_part2 {
         let result2 = part2(&contents);
         println!("Part2 result {result2:?}");
     }
