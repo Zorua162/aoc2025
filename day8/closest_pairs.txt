@@ -1,0 +1,36 @@
+LocationPair { 
+  loc1: Location { x: 0, y: 0, z: 0 }, 
+  loc2: Location { x: 1, y: 0, z: 0 }, 
+  .calculate_distance(): 1.0 }
+LocationPair { 
+  loc1: Location { x: 0, y: 10, z: 0 }, 
+  loc2: Location { x: 1, y: 10, z: 0 }, 
+  .calculate_distance(): 1.0 }
+LocationPair { 
+  loc1: Location { x: 100, y: 100, z: 100 }, 
+  loc2: Location { x: 101, y: 102, z: 101 }, 
+  .calculate_distance(): 2.4494898 }
+LocationPair { 
+  loc1: Location { x: 100, y: 200, z: 100 }, 
+  loc2: Location { x: 101, y: 102, z: 101 }, 
+  .calculate_distance(): 98.0102 }
+LocationPair { 
+  loc1: Location { x: 501, y: 500, z: 401 }, 
+  loc2: Location { x: 500, y: 500, z: 500 }, 
+  .calculate_distance(): 99.00505 }
+LocationPair { 
+  loc1: Location { x: 700, y: 700, z: 700 }, 
+  loc2: Location { x: 800, y: 800, z: 800 }, 
+  .calculate_distance(): 173.20508 }
+LocationPair { 
+  loc1: Location { x: 900, y: 900, z: 900 }, 
+  loc2: Location { x: 800, y: 800, z: 800 }, 
+  .calculate_distance(): 173.20508 }
+LocationPair { 
+  loc1: Location { x: 1000, y: 1000, z: 1000 }, 
+  loc2: Location { x: 900, y: 900, z: 900 }, 
+  .calculate_distance(): 173.20508 }
+LocationPair { 
+  loc1: Location { x: 600, y: 100, z: 100 }, 
+  loc2: Location { x: 101, y: 102, z: 101 }, 
+  .calculate_distance(): 499.005 }
