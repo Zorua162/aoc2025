@@ -142,31 +142,27 @@ fn parse_locations(contents: &String) -> Vec<Location> {
     return locations;
 }
 
-fn find_closest_pairs(locations: Vec<Location>) -> Vec<LocationPair> {
+fn create_pairs(locations: &Vec<Location>) -> Vec<LocationPair> {
+    // take only the x closest pairs, where x is a value that we can tune
+    let max_closest_per_location = 10;
     let mut closest_pairs: Vec<LocationPair> = vec![];
-    for location in &locations {
-        let mut closest_location: Option<&Location> = None;
-        let mut closest_location_distance: f32 = f32::MAX;
-        for other_location in &locations {
+    for location in locations {
+        let mut this_location_pairs: Vec<LocationPair> = vec![];
+        for other_location in locations {
             if location == other_location {
                 continue;
             }
 
-            let distance = location.calculate_distance(other_location);
-            if distance < closest_location_distance {
-                closest_location_distance = distance;
-                closest_location = Some(other_location);
-            }
+            this_location_pairs.push(LocationPair {
+                loc1: location.clone(),
+                loc2: other_location.clone(),
+            });
         }
 
-        if closest_location == None {
-            panic!("closest location was not found");
-        }
+        this_location_pairs.sort();
+        let only_closest_pairs = this_location_pairs[..max_closest_per_location].to_vec();
+        closest_pairs.extend(only_closest_pairs)
 
-        closest_pairs.push(LocationPair {
-            loc1: location.clone(),
-            loc2: closest_location.expect("Expected a location here").clone(),
-        });
     }
     closest_pairs.sort();
 
@@ -193,22 +189,22 @@ fn add_pairs_to_clusters(
 
     match connected.len() {
         0 => {
-            println!("New cluster for {pair:?}");
+            // println!("New cluster for {pair:?}");
             out_clusters.push(LocationCluster {
                 locations: pair.get_locations(),
                 pairs: vec![pair.clone()],
             });
         }
         1 => {
-            println!("Add to cluster for {pair:?}");
+            // println!("Add to cluster for {pair:?}");
             let cluster: &mut LocationCluster =
                 connected.get_mut(0).expect("Expected a cluster here");
             cluster.add_pair(pair);
-            dbg!(&cluster);
+            // dbg!(&cluster);
             out_clusters.push(cluster.clone());
         }
         _ => {
-            println!("Combine clusters for {pair:?} {connected:?}");
+            // println!("Combine clusters for {pair:?} {connected:?}");
 
             let mut new_combo_cluster = LocationCluster {
                 locations: pair.get_locations(),
@@ -227,9 +223,13 @@ fn add_pairs_to_clusters(
 
 fn remove_duplicates(closest_pairs: Vec<LocationPair>) -> Vec<LocationPair> {
     let mut out_pairs: Vec<LocationPair> = vec![];
-    for pair in closest_pairs {
+    let pairs_len = closest_pairs.len();
+    for (i, pair) in closest_pairs.iter().enumerate() {
+        if i % 10000 == 0 {
+            println!("Currently on pair {i}/{pairs_len}")
+        }
         if !out_pairs.contains(&pair.swap_locations()) {
-            out_pairs.push(pair)
+            out_pairs.push(pair.clone())
         }
     }
     return out_pairs;
@@ -251,30 +251,41 @@ fn get_three_largest_clusters(mut clusters: Vec<LocationCluster>) -> Vec<Locatio
     return out_clusters;
 }
 
-fn write_to_file(text: &String) -> std::io::Result<()> {
+fn _write_to_file(text: &String) -> std::io::Result<()> {
     let mut file = File::create("closest_pairs.txt")?;
     file.write_all(text.as_bytes())?;
     Ok(())
 }
 
-fn part1(contents: &String, num_connections: usize) -> Option<Answer> {
+
+fn get_all_pairs(contents: &String) -> (Vec<Location>, Vec<LocationPair>) {
+    println!("Parsing locations");
     let locations = parse_locations(contents);
 
-    let mut closest_pairs = find_closest_pairs(locations);
+    println!("Creating closest pairs");
+    let mut closest_pairs = create_pairs(&locations);
 
+    println!("Removing duplicates");
     closest_pairs = remove_duplicates(closest_pairs);
 
+    println!("Writing debug to file");
     // let debug_string: String = "".to_string();
-    let debug_string: String = closest_pairs.iter().map(|p| format!("{p:?}\n")).collect();
-    let _ = write_to_file(&debug_string);
+    // let debug_string: String = closest_pairs.iter().map(|p| format!("{p:?}\n")).collect();
+    // let _ = write_to_file(&debug_string);
 
 
     dbg!(&closest_pairs);
 
+    return (locations, closest_pairs);
+}
+
+fn part1(contents: &String, num_connections: usize) -> Option<Answer> {
+    let (_, closest_pairs) = get_all_pairs(contents);
     let mut clusters: Vec<LocationCluster> = vec![];
 
     println!("Starting clustering");
 
+    println!("Finding clusters with the closest {num_connections} connections");
     for pair in &closest_pairs[..num_connections] {
         println!("\nFinding cluster for {pair:?}");
         clusters = add_pairs_to_clusters(clusters, pair);
@@ -300,16 +311,50 @@ fn part1(contents: &String, num_connections: usize) -> Option<Answer> {
 // Part 1 attempted answers
 
 fn part2(contents: &String) -> Option<Answer> {
-    println!("Contents is {contents}");
-    None
+
+    let (locations, closest_pairs) = get_all_pairs(contents);
+
+    let mut clusters = pre_add_locations(locations);
+
+    println!("Starting clustering");
+
+    println!("Finding required connections");
+    let mut i = 0;
+    let mut pair= None;
+    while clusters.len() != 1  {
+        pair = Some(&closest_pairs[i]);
+        println!("\nFinding cluster for {pair:?}");
+        clusters = add_pairs_to_clusters(clusters, pair.expect("Expected a pair here"));
+        i += 1;
+    }
+
+    println!("Final pair was {pair:?} i was {i}");
+
+    if pair.is_none() {
+        panic!("Pair was not initialized");
+    }
+
+    let answer = (pair.expect("Expected a pair").loc1.x * pair.expect("Expected a pair").loc2.x) as u64;
+    return Some(Answer{answer})
+}
+
+fn pre_add_locations(locations: Vec<Location>) -> Vec<LocationCluster> {
+    let mut clusters = vec![];
+
+    for location in locations {
+        clusters.push(LocationCluster{locations: vec![location], pairs: vec![]})
+    }
+
+    return clusters;
+
 }
 
 // Part 2 attempted answers
 
 fn main() {
     let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
-    let do_part1 = true;
-    let do_part2 = false;
+    let do_part1 = false;
+    let do_part2 = true;
     if do_part1 {
         let result1 = part1(&contents, 1000);
         println!("Part1 result {result1:?}");
@@ -358,7 +403,6 @@ mod tests {
         }
     }
 
-    #[ignore]
     #[test]
     fn test_part1_example() {
         let setup = Setup::new();
@@ -367,6 +411,7 @@ mod tests {
         assert_eq!(result, Some(Answer { answer: 40 }));
     }
 
+    #[ignore]
     #[test]
     fn test_part1_self_created() {
         let contents = "0,0,0
@@ -387,21 +432,19 @@ mod tests {
         assert_eq!(result, Some(Answer { answer: 40 }));
     }
 
-    #[ignore]
     #[test]
     fn test_part1() {
         let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
         let result = part1(&contents, 1000);
-        assert_eq!(result, Some(Answer { answer: 1395 }));
+        assert_eq!(result, Some(Answer { answer: 24360 }));
     }
 
-    #[ignore]
     #[test]
     fn test_part2_example() {
         let setup = Setup::new();
         let contents = &setup.contents;
         let result = part2(&contents);
-        assert_eq!(result, Some(Answer { answer: 43 }));
+        assert_eq!(result, Some(Answer { answer: 25272 }));
     }
 
     #[ignore]
