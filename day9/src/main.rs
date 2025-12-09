@@ -113,6 +113,14 @@ fn generate_map(contents: &str) -> Vec<Vec<bool>> {
 fn part2(contents: &String) -> Option<Answer> {
     // First generate map of all "in" and "out" positions
     let map:  Vec<Vec<bool>> = generate_map(contents);
+
+    // Generate all the pairs, same as part1
+
+    // Do a validity check on the square for each pair, remove non-valid squares
+
+    // Same as part1 now with sort by size
+
+    // Output largest valid square
     
     println!("Contents is {contents}");
     None
