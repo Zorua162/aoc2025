@@ -23,7 +23,6 @@ impl InputGetter for LocalFileInputGetter {
 fn part1(contents: &String) -> Option<Answer> {
     println!("Contents is {contents}");
     None
-
 }
 
 // Part 1 attempted answers
@@ -31,7 +30,6 @@ fn part1(contents: &String) -> Option<Answer> {
 fn part2(contents: &String) -> Option<Answer> {
     println!("Contents is {contents}");
     None
-
 }
 
 // Part 2 attempted answers
