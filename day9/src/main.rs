@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fs};
+use std::{cmp::Ordering, collections::HashMap, fs};
 
 #[derive(Debug, PartialEq)]
 struct Answer {
@@ -92,37 +92,164 @@ fn part1(contents: &String) -> Option<Answer> {
 
     pairs.sort();
 
-    let answer = pairs[pairs.len()-1].calculate_square_size() as u64;
+    let answer = pairs[pairs.len() - 1].calculate_square_size() as u64;
 
-    return Some(Answer { answer })
+    return Some(Answer { answer });
 }
 
 // Part 1 attempted answers
 
-fn generate_map(contents: &str) -> Vec<Vec<bool>> {
+fn generate_map(contents: &str) -> HashMap<u64, HashMap<u64, bool>> {
     // True in the map means that there is a red or green tile there
     // Everywhere else defaults to false
 
+    let mut map: HashMap<u64, HashMap<u64, bool>> = HashMap::new();
+
     // First draw the shape
+    let lines: Vec<&str> = contents.lines().collect();
+    let (mut x1, mut y1) = split_line(lines[lines.len() - 1]);
+    for line in lines {
+        let (x2, y2) = split_line(line);
+        // Do generation
+
+        let (start_x, end_x) = sort_values(x1, x2);
+        let (start_y, end_y) = sort_values(y1, y2);
+
+        for i in start_x..end_x + 1 {
+            for j in start_y..end_y + 1 {
+                println!("Outputting i {i} outputting j {j}");
+                map.entry(i)
+                    .and_modify(|x_map| {x_map.insert(j, true);})
+                    .or_insert(HashMap::new());
+            }
+        }
+
+        (x1, y1) = (x2, y2)
+    }
 
     // Then flood fill it
-    
-    todo!()
+    map = flood_fill(map);
+
+    return map;
+}
+
+fn sort_values(v1: u64, v2: u64) -> (u64, u64) {
+    if v1 > v2 {
+        return (v2, v1)
+    }
+    return (v1, v2)
+}
+
+fn flood_fill(mut map: HashMap<u64, HashMap<u64, bool>>) -> HashMap<u64, HashMap<u64, bool>> {
+    for row in map.values_mut() {
+
+        if row.len() == 0 {
+            continue
+        }
+
+        let mut row_values: Vec<&u64> = row.keys().collect();
+        row_values.sort();
+
+        // Start with false, as we know first row value will flip this to true
+        let mut inside = false;
+
+        println!("row_values {row_values:?}");
+
+
+        for i in *row_values[0]..*row_values[row_values.len()-1] {
+
+            // If its already true, then that means this is a wall, so flip to off if we were already inside
+            let val = row.get(&i);
+
+            if val.is_none() {
+                continue
+            }
+            if *val.unwrap() {
+                inside = !inside;
+            }
+
+            if inside {
+                row.insert(i, true);
+            }
+
+        }
+
+    }
+    return map;
+
+}
+
+fn split_line(line: &str) -> (u64, u64) {
+    let split_line: Vec<&str> = line.split(",").collect();
+
+    let x = split_line[0].parse().expect("Expected a value here");
+    let y = split_line[1].parse().expect("Expected a value here");
+
+    return (x, y);
+}
+
+fn display_map(map: HashMap<u64, HashMap<u64, bool>>) {
+
+    let mut out_string = "".to_string();
+
+    let mut y_keys = map.keys().collect::<Vec<&u64>>();
+    y_keys.sort();
+    y_keys.reverse();
+
+    let max_y = *y_keys[0];
+
+    let mut max_x = 0;
+
+    for row in map.values() {
+        if row.len() == 0 {
+            continue
+        }
+        let mut x_keys = row.keys().collect::<Vec<&u64>>();
+        x_keys.sort();
+        x_keys.reverse();
+        let row_max = *x_keys[0];
+        if row_max > max_x {
+            max_x = row_max;
+        }
+    }
+
+
+    for i in 0..max_y {
+        let row: Option<&HashMap<u64, bool>> = map.get(&i);
+        for j in 0..max_x {
+            if row.is_none() {
+                out_string += ".";
+                continue
+            }
+            let val = row.unwrap().get(&j);
+
+            if let Some(true) = val {
+                out_string += "#";
+
+            } else {
+                out_string += ".";
+            }
+        }
+        out_string += "\n";
+    }
+
+    println!("{out_string}")
 }
 
 fn part2(contents: &String) -> Option<Answer> {
     // First generate map of all "in" and "out" positions
-    let map:  Vec<Vec<bool>> = generate_map(contents);
+    let map: HashMap<u64, HashMap<u64, bool>> = generate_map(contents);
+
+    display_map(map);
 
     // Generate all the pairs, same as part1
 
-    // Do a validity check on the square for each pair, remove non-valid squares
+    // Do a validity check on the square for each pair, remove non-valid squares using map
 
     // Same as part1 now with sort by size
 
     // Output largest valid square
-    
-    println!("Contents is {contents}");
+
     None
 }
 
