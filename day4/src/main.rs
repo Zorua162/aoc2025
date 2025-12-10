@@ -90,7 +90,7 @@ fn remove_rolls(roll_data: Vec<Vec<char>>, answer: &mut i32) -> (Vec<Vec<char>>,
 fn part1(contents: &String) -> Option<Answer> {
     let mut answer = 0;
 
-    let mut roll_data: Vec<Vec<char>> = contents
+    let roll_data: Vec<Vec<char>> = contents
         .lines()
         .map(|line| line.chars().collect())
         .collect();
