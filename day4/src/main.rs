@@ -95,7 +95,7 @@ fn part1(contents: &String) -> Option<Answer> {
         .map(|line| line.chars().collect())
         .collect();
 
-    (roll_data, answer) = remove_rolls(roll_data, &mut answer);
+    (_, answer) = remove_rolls(roll_data, &mut answer);
 
     // Useful tool for looking at what is in a 2d vector!
     // dbg!(roll_data.iter().map(|line| line.iter().collect::<String>()).collect::<Vec<String>>());
