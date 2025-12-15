@@ -25,7 +25,14 @@ struct TwoDimensionalLocation {
     y: i64,
 }
 
-#[derive(Eq, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
+enum Tile {
+    Red,
+    Green,
+    Empty
+}
+
+#[derive(Debug, Eq, PartialEq, Clone)]
 struct TwoDimensionalLocationPair {
     loc1: TwoDimensionalLocation,
     loc2: TwoDimensionalLocation,
@@ -37,6 +44,40 @@ impl TwoDimensionalLocationPair {
         let y_diff: i64 = self.loc1.y - (self.loc2.y + 1).abs();
         return x_diff * y_diff;
     }
+    
+    fn is_valid(&self, map: &HashMap<u64, HashMap<u64, Tile>>) -> bool {
+        // Check every outer value of the square made by the pair, if map shows red or green for it then it is valid, otherwise its not valid
+        let (start_x, end_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
+        let (start_y, end_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
+
+        if !row_is_valid(&map, start_x, end_x, start_y) || !row_is_valid(&map, start_x, end_x, end_y) {
+            return false
+        }
+
+        if !column_is_valid(map.clone(), start_y, end_y, start_x) || !column_is_valid(map.clone(), start_y, end_y, end_x) {
+            return false
+        }
+
+        return true
+    }
+}
+
+fn column_is_valid(map: HashMap<u64, HashMap<u64, Tile>>, start_y: u64, end_y: u64, x: u64) -> bool {
+    for j in start_y..end_y+1 {
+        if get_map_location(&map, x, j) == Tile::Empty {
+            return false;
+        }
+    }
+    return true;
+}
+
+fn row_is_valid(map: &HashMap<u64, HashMap<u64, Tile>>, start_x: u64, end_x: u64, y: u64) -> bool {
+    for i in start_x..end_x+1 {
+        if get_map_location(&map, i, y) == Tile::Empty {
+            return false;
+        }
+    }
+    return true;
 }
 
 impl PartialOrd for TwoDimensionalLocationPair {
@@ -99,36 +140,71 @@ fn part1(contents: &String) -> Option<Answer> {
 
 // Part 1 attempted answers
 
-fn generate_map(contents: &str) -> HashMap<u64, HashMap<u64, bool>> {
-    // True in the map means that there is a red or green tile there
-    // Everywhere else defaults to false
+fn default_map(x: u64, val: Tile) -> HashMap<u64, Tile> {
+    let mut map: HashMap<u64, Tile> = HashMap::new();
 
-    let mut map: HashMap<u64, HashMap<u64, bool>> = HashMap::new();
+    map.insert(x, val);
 
-    // First draw the shape
+    return map;
+}
+
+fn set_map_location(mut map: HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64, val: Tile) -> HashMap<u64, HashMap<u64, Tile>>  {
+    map.entry(y)
+        .and_modify(|x_map| {x_map.insert(x, val.clone());})
+        .or_insert(default_map(x, val));
+
+    return map
+}
+
+fn get_map_location(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> Tile {
+    let empty_map = HashMap::new();
+    let x_map = map.get(&y).unwrap_or(&empty_map);
+
+    let x_val = x_map.get(&x).unwrap_or(&Tile::Empty);
+    return x_val.clone()
+}
+
+fn generate_map(contents: &str) -> HashMap<u64, HashMap<u64, Tile>> {
+    // Map contains location - 1 index with red or green for tile colour
+    let mut map: HashMap<u64, HashMap<u64, Tile>> = HashMap::new();
+
+    // Add green tile outline
     let lines: Vec<&str> = contents.lines().collect();
     let (mut x1, mut y1) = split_line(lines[lines.len() - 1]);
-    for line in lines {
+
+    for line in &lines {
         let (x2, y2) = split_line(line);
         // Do generation
 
         let (start_x, end_x) = sort_values(x1, x2);
         let (start_y, end_y) = sort_values(y1, y2);
 
+
+        // println!("x: {start_x}+1..{end_x}+1 and {start_y}+1..{end_y}+1");
         for i in start_x..end_x + 1 {
             for j in start_y..end_y + 1 {
-                println!("Outputting i {i} outputting j {j}");
-                map.entry(i)
-                    .and_modify(|x_map| {x_map.insert(j, true);})
-                    .or_insert(HashMap::new());
+                // println!("Outputting i {i} outputting j {j}");
+                if get_map_location(&map, j, i) != Tile::Red {
+                    map = set_map_location(map, i, j, Tile::Green);
+                }
             }
         }
+
+        map = set_map_location(map, start_x, start_y, Tile::Red);
+        map = set_map_location(map, end_x, end_y, Tile::Red);
 
         (x1, y1) = (x2, y2)
     }
 
-    // Then flood fill it
-    map = flood_fill(map);
+    // Add red tiles
+    // for line in lines {
+    //     let (x, y) = split_line(line);
+    //             map = set_map_location(map, x, y, Tile::Red);
+    // }
+
+    // dbg!(&map);
+
+
 
     return map;
 }
@@ -140,8 +216,10 @@ fn sort_values(v1: u64, v2: u64) -> (u64, u64) {
     return (v1, v2)
 }
 
-fn flood_fill(mut map: HashMap<u64, HashMap<u64, bool>>) -> HashMap<u64, HashMap<u64, bool>> {
-    for row in map.values_mut() {
+fn flood_fill(mut map: HashMap<u64, HashMap<u64, Tile>>) -> HashMap<u64, HashMap<u64, Tile>> {
+    let map_size = map.len();
+    for (i, row) in map.values_mut().enumerate() {
+        println!("Working on row {row:?} i: {i}/{map_size}");
 
         if row.len() == 0 {
             continue
@@ -153,23 +231,20 @@ fn flood_fill(mut map: HashMap<u64, HashMap<u64, bool>>) -> HashMap<u64, HashMap
         // Start with false, as we know first row value will flip this to true
         let mut inside = false;
 
-        println!("row_values {row_values:?}");
-
 
         for i in *row_values[0]..*row_values[row_values.len()-1] {
 
             // If its already true, then that means this is a wall, so flip to off if we were already inside
             let val = row.get(&i);
 
-            if val.is_none() {
+            let value = val.unwrap_or(&Tile::Empty);
+            if (value == &Tile::Green || value == &Tile::Red) && row.get(&(i-1)).unwrap_or(&Tile::Empty) == &Tile::Empty {
+                inside = !inside;
                 continue
             }
-            if *val.unwrap() {
-                inside = !inside;
-            }
 
-            if inside {
-                row.insert(i, true);
+            if inside && value != &Tile::Red {
+                row.insert(i, Tile::Green);
             }
 
         }
@@ -188,35 +263,16 @@ fn split_line(line: &str) -> (u64, u64) {
     return (x, y);
 }
 
-fn create_display_map(map: HashMap<u64, HashMap<u64, bool>>) -> String {
+fn create_display_map(map: &HashMap<u64, HashMap<u64, Tile>>) -> String {
 
     let mut out_string = "".to_string();
 
-    let mut y_keys = map.keys().collect::<Vec<&u64>>();
-    y_keys.sort();
-    y_keys.reverse();
-
-    let max_y = *y_keys[0];
-
-    let mut max_x = 0;
-
-    for row in map.values() {
-        if row.len() == 0 {
-            continue
-        }
-        let mut x_keys = row.keys().collect::<Vec<&u64>>();
-        x_keys.sort();
-        x_keys.reverse();
-        let row_max = *x_keys[0];
-        println!("row_max is {row_max}");
-        if row_max > max_x {
-            max_x = row_max;
-        }
-    }
+    let max_y = 9;
+    let max_x = 14;
 
 
     for i in 0..max_y {
-        let row: Option<&HashMap<u64, bool>> = map.get(&i);
+        let row: Option<&HashMap<u64, Tile>> = map.get(&i);
         for j in 0..max_x {
             if row.is_none() {
                 out_string += ".";
@@ -224,12 +280,12 @@ fn create_display_map(map: HashMap<u64, HashMap<u64, bool>>) -> String {
             }
             let val = row.unwrap().get(&j);
 
-            if let Some(true) = val {
-                out_string += "#";
-
-            } else {
-                out_string += ".";
+            match val {
+                Some(Tile::Red) => out_string += "#",
+                Some(Tile::Green) => out_string += "X",
+                _ => out_string += "."
             }
+
         }
         out_string += "\n";
     }
@@ -239,20 +295,41 @@ fn create_display_map(map: HashMap<u64, HashMap<u64, bool>>) -> String {
 
 fn part2(contents: &String) -> Option<Answer> {
     // First generate map of all "in" and "out" positions
-    let map: HashMap<u64, HashMap<u64, bool>> = generate_map(contents);
+    println!("Generating map...");
+    let mut map: HashMap<u64, HashMap<u64, Tile>> = generate_map(contents);
 
-    let out_string = create_display_map(map);
-    println!("{out_string}");
+    println!("Flood filling map...");
+    // Then flood fill it
+    map = flood_fill(map);
 
+    println!("Display map...");
+    // let out_string = create_display_map(&map);
+    // println!("{out_string}");
+
+    println!("Parsing locations...");
     // Generate all the pairs, same as part1
+    let locations: Vec<TwoDimensionalLocation> = parse_locations(contents);
 
-    // Do a validity check on the square for each pair, remove non-valid squares using map
+    println!("Creating pairs...");
+    let mut pairs: Vec<TwoDimensionalLocationPair> = create_pairs(locations);
 
-    // Same as part1 now with sort by size
+    pairs.sort();
+    pairs.reverse();
+
+    // Check the largest is valid, try next down until a valid one is found
+    for pair in pairs {
+        println!("Checking pair {pair:?}...");
+        if pair.is_valid(&map) {
+            let answer = pair.calculate_square_size() as u64;
+            return Some(Answer { answer });
+
+        }
+    }
+
+
 
     // Output largest valid square
-
-    None
+    return None
 }
 
 
@@ -260,8 +337,8 @@ fn part2(contents: &String) -> Option<Answer> {
 
 fn main() {
     let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
-    let do_part1 = true;
-    let do_part2 = false;
+    let do_part1 = false;
+    let do_part2 = true;
     if do_part1 {
         let result1 = part1(&contents);
         println!("Part1 result {result1:?}");
@@ -322,12 +399,12 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_map() {
+    fn test_part2_generate_map() {
         let setup = Setup::new();
         let contents = &setup.contents;
-        let map: HashMap<u64, HashMap<u64, bool>> = generate_map(contents);
+        let map: HashMap<u64, HashMap<u64, Tile>> = generate_map(contents);
 
-        let display_map= create_display_map(map);
+        let display_map= create_display_map(&map);
 
 
         let expected_map_pre_fill = "..............
@@ -341,12 +418,45 @@ mod tests {
 ..............
 ";
 
-        let first_line_expected = expected_map_pre_fill.lines().collect::<Vec<&str>>()[0];
-        let first_line_actual = display_map.lines().collect::<Vec<&str>>()[0];
+        let lines_expected = expected_map_pre_fill.lines().collect::<Vec<&str>>();
+        let first_line_expected = lines_expected[0];
+
+        let lines_actual = display_map.lines().collect::<Vec<&str>>();
+        let first_line_actual = lines_actual[0];
+
+        dbg!(&lines_actual);
+
+        assert_eq!(lines_actual.len(), lines_expected.len());
 
         assert_eq!(first_line_actual.len(), first_line_expected.len());
 
         assert_eq!(expected_map_pre_fill, display_map);
+    }
+
+    #[test]
+    fn test_part2_floodfill() {
+        let setup = Setup::new();
+        let contents = &setup.contents;
+        let mut map: HashMap<u64, HashMap<u64, Tile>> = generate_map(contents);
+        map = flood_fill(map);
+
+        let display_map= create_display_map(&map);
+
+        println!("{display_map}");
+
+        let expected_map = "..............
+.......#XXX#..
+.......XXXXX..
+..#XXXX#XXXX..
+..XXXXXXXXXX..
+..#XXXXXX#XX..
+.........XXX..
+.........#X#..
+..............
+";
+
+
+        assert_eq!(expected_map, display_map);
     }
 
 
