@@ -188,7 +188,7 @@ fn split_line(line: &str) -> (u64, u64) {
     return (x, y);
 }
 
-fn display_map(map: HashMap<u64, HashMap<u64, bool>>) {
+fn create_display_map(map: HashMap<u64, HashMap<u64, bool>>) -> String {
 
     let mut out_string = "".to_string();
 
@@ -208,6 +208,7 @@ fn display_map(map: HashMap<u64, HashMap<u64, bool>>) {
         x_keys.sort();
         x_keys.reverse();
         let row_max = *x_keys[0];
+        println!("row_max is {row_max}");
         if row_max > max_x {
             max_x = row_max;
         }
@@ -232,15 +233,16 @@ fn display_map(map: HashMap<u64, HashMap<u64, bool>>) {
         }
         out_string += "\n";
     }
+    return out_string
 
-    println!("{out_string}")
 }
 
 fn part2(contents: &String) -> Option<Answer> {
     // First generate map of all "in" and "out" positions
     let map: HashMap<u64, HashMap<u64, bool>> = generate_map(contents);
 
-    display_map(map);
+    let out_string = create_display_map(map);
+    println!("{out_string}");
 
     // Generate all the pairs, same as part1
 
@@ -318,6 +320,35 @@ mod tests {
         let result = part2(&contents);
         assert_eq!(result, Some(Answer { answer: 24 }));
     }
+
+    #[test]
+    fn test_part2_map() {
+        let setup = Setup::new();
+        let contents = &setup.contents;
+        let map: HashMap<u64, HashMap<u64, bool>> = generate_map(contents);
+
+        let display_map= create_display_map(map);
+
+
+        let expected_map_pre_fill = "..............
+.......#XXX#..
+.......X...X..
+..#XXXX#...X..
+..X........X..
+..#XXXXXX#.X..
+.........X.X..
+.........#X#..
+..............
+";
+
+        let first_line_expected = expected_map_pre_fill.lines().collect::<Vec<&str>>()[0];
+        let first_line_actual = display_map.lines().collect::<Vec<&str>>()[0];
+
+        assert_eq!(first_line_actual.len(), first_line_expected.len());
+
+        assert_eq!(expected_map_pre_fill, display_map);
+    }
+
 
     #[ignore]
     #[test]
