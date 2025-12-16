@@ -1,4 +1,8 @@
+extern crate pbr;
+
 use std::{cmp::Ordering, collections::HashMap, fs};
+
+use pbr::ProgressBar;
 
 #[derive(Debug, PartialEq)]
 struct Answer {
@@ -46,20 +50,8 @@ impl TwoDimensionalLocationPair {
     }
     
     fn is_valid(&self, map: &HashMap<u64, HashMap<u64, Tile>>) -> bool {
-        // Check every outer value of the square made by the pair, if map shows red or green for it then it is valid, otherwise its not valid
-        // let (start_x, end_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
-        // let (start_y, end_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
 
-        // if !row_is_valid(&map, start_x, end_x, start_y) || !row_is_valid(&map, start_x, end_x, end_y) {
-        //     return false
-        // }
-
-        // if !column_is_valid(map.clone(), start_y, end_y, start_x) || !column_is_valid(map.clone(), start_y, end_y, end_x) {
-        //     return false
-        // }
-
-        // Check all four corners (and assume there aren't any weird "dip" in bits, which could invalidate a possibly valid sltn)
-
+        // Check all four corners as a quick first pass
         let corner1 = &self.loc1;
         let corner2 = &self.loc2;
 
@@ -72,6 +64,19 @@ impl TwoDimensionalLocationPair {
             if !check_location_in_loop(map, corner) {
                 return false;
             }
+        }
+
+        println!("This is possibly valid, now checking every spot to be 100% sure");
+        // Check every outer value of the square made by the pair, if map shows red or green for it then it is valid, otherwise its not valid
+        let (start_x, end_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
+        let (start_y, end_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
+
+        if !row_is_valid(&map, start_x, end_x, start_y) || !row_is_valid(&map, start_x, end_x, end_y) {
+            return false
+        }
+
+        if !column_is_valid(map.clone(), start_y, end_y, start_x) || !column_is_valid(map.clone(), start_y, end_y, end_x) {
+            return false
         }
 
         return true
@@ -207,31 +212,38 @@ fn check_below(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
     y_map_keys.reverse();
     let max_y = y_map_keys[0];
 
-
-    for j in y..*max_y+1 {
-        if get_map_location(map, x, j) != Tile::Empty {
-            return true
-        }
+    if max_y >= &y {
+        return true;
     }
+
     println!("Below was false");
     return false
 }
 
 fn check_above(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
-    for j in 0..y {
-        if get_map_location(map, x, j) != Tile::Empty {
-            return true
-        }
+    let mut y_map_keys: Vec<&u64> = map.keys().collect();
+
+    y_map_keys.sort();
+
+    let min_y = y_map_keys[0];
+
+    if min_y <= &y {
+        return true;
     }
     println!("Above was false");
     return false
 }
 
 fn check_left(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
-    for i in 0..x {
-        if get_map_location(map, i, y) != Tile::Empty {
-            return true
-        }
+    let empty_map = &HashMap::new();
+    let x_map = map.get(&y).unwrap_or(empty_map);
+    let mut x_map_keys: Vec<&u64> = x_map.keys().collect();
+
+    x_map_keys.sort();
+    let min_x = x_map_keys[0];
+
+    if min_x <= &x {
+        return true;
     }
     println!("Left was false");
     return false
@@ -246,11 +258,8 @@ fn check_right(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
     x_map_keys.reverse();
     let max_x = x_map_keys[0];
 
-    for i in x..*max_x+1 {
-        // println!("Right checking {i} {y}");
-        if get_map_location(map, i, y) != Tile::Empty {
-            return true
-        }
+    if max_x >= &x {
+        return true;
     }
     println!("Right was false for {x}, {y}, max_x is {max_x}");
     return false
@@ -368,12 +377,18 @@ fn part2(contents: &String) -> Option<Answer> {
     pairs.sort();
     pairs.reverse();
 
+    let count = pairs.len();
+
+    let mut pb = ProgressBar::new(count as u64);
+    pb.format("╢▌▌░╟");
+
     // Check the largest is valid, try next down until a valid one is found
-    let len_pairs = pairs.len();
     for (i, pair) in pairs.iter().enumerate() {
-        println!("Checking pair {pair:?}... {i}/{len_pairs}");
+        println!("Checking pair {pair:?}... {i}/{count}");
+        pb.inc();
         if pair.is_valid(&map) {
             let answer = pair.calculate_square_size() as u64;
+            pb.finish_print("done");
             return Some(Answer { answer });
 
         }
@@ -387,7 +402,7 @@ fn part2(contents: &String) -> Option<Answer> {
 
 
 // Part 2 attempted answers
-// 4474437111
+// 4474437111 (2290)
 
 fn main() {
     let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
