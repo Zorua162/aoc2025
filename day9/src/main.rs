@@ -45,26 +45,43 @@ impl TwoDimensionalLocationPair {
         return x_diff * y_diff;
     }
     
-    fn is_valid(&self, map: &HashMap<u64, HashMap<u64, Tile>>) -> bool {
+    fn is_valid(&self, pairs: &Vec<TwoDimensionalLocationPair>) -> bool {
         // Check every outer value of the square made by the pair, if map shows red or green for it then it is valid, otherwise its not valid
-        let (start_x, end_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
-        let (start_y, end_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
+        // let (start_x, end_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
+        // let (start_y, end_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
 
-        if !row_is_valid(&map, start_x, end_x, start_y) || !row_is_valid(&map, start_x, end_x, end_y) {
-            return false
+        // if !row_is_valid(&map, start_x, end_x, start_y) || !row_is_valid(&map, start_x, end_x, end_y) {
+        //     return false
+        // }
+
+        // if !column_is_valid(map.clone(), start_y, end_y, start_x) || !column_is_valid(map.clone(), start_y, end_y, end_x) {
+        //     return false
+        // }
+
+        // return true
+
+
+        // Generate other corners, then if those corners match one of the other locations then this is valid
+
+        let pos1 = TwoDimensionalLocation{ x: self.loc2.x, y: self.loc1.y};
+        let pos2 = TwoDimensionalLocation{ x: self.loc1.x, y: self.loc2.y};
+
+        for pair in pairs {
+            let list_pos1 = &pair.loc1;
+            let list_pos2 = &pair.loc2;
+
+            if pos1 == *list_pos1 || pos1 == *list_pos2 || pos2 == *list_pos1 || pos2 == *list_pos2 {
+                return true;
+            }
         }
 
-        if !column_is_valid(map.clone(), start_y, end_y, start_x) || !column_is_valid(map.clone(), start_y, end_y, end_x) {
-            return false
-        }
-
-        return true
+        return false;
     }
 }
 
 fn column_is_valid(map: HashMap<u64, HashMap<u64, Tile>>, start_y: u64, end_y: u64, x: u64) -> bool {
     for j in start_y..end_y+1 {
-        if get_map_location(&map, x, j) == Tile::Empty {
+        if !location_is_inside(&map, x, j) {
             return false;
         }
     }
@@ -73,11 +90,17 @@ fn column_is_valid(map: HashMap<u64, HashMap<u64, Tile>>, start_y: u64, end_y: u
 
 fn row_is_valid(map: &HashMap<u64, HashMap<u64, Tile>>, start_x: u64, end_x: u64, y: u64) -> bool {
     for i in start_x..end_x+1 {
-        if get_map_location(&map, i, y) == Tile::Empty {
+        if !location_is_inside(&map, i, y) {
             return false;
         }
     }
     return true;
+}
+
+fn location_is_inside(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
+
+    // Search up first
+    todo!()
 }
 
 impl PartialOrd for TwoDimensionalLocationPair {
@@ -270,6 +293,9 @@ fn create_display_map(map: &HashMap<u64, HashMap<u64, Tile>>) -> String {
     let max_y = 9;
     let max_x = 14;
 
+    // let max_y = 10000;
+    // let max_x = 10000;
+
 
     for i in 0..max_y {
         let row: Option<&HashMap<u64, Tile>> = map.get(&i);
@@ -300,9 +326,9 @@ fn part2(contents: &String) -> Option<Answer> {
 
     println!("Flood filling map...");
     // Then flood fill it
-    map = flood_fill(map);
+    // map = flood_fill(map);
 
-    println!("Display map...");
+    // println!("Display map...");
     // let out_string = create_display_map(&map);
     // println!("{out_string}");
 
@@ -317,9 +343,9 @@ fn part2(contents: &String) -> Option<Answer> {
     pairs.reverse();
 
     // Check the largest is valid, try next down until a valid one is found
-    for pair in pairs {
+    for pair in &pairs {
         println!("Checking pair {pair:?}...");
-        if pair.is_valid(&map) {
+        if pair.is_valid(&pairs) {
             let answer = pair.calculate_square_size() as u64;
             return Some(Answer { answer });
 
