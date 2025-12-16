@@ -47,15 +47,31 @@ impl TwoDimensionalLocationPair {
     
     fn is_valid(&self, map: &HashMap<u64, HashMap<u64, Tile>>) -> bool {
         // Check every outer value of the square made by the pair, if map shows red or green for it then it is valid, otherwise its not valid
-        let (start_x, end_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
-        let (start_y, end_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
+        // let (start_x, end_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
+        // let (start_y, end_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
 
-        if !row_is_valid(&map, start_x, end_x, start_y) || !row_is_valid(&map, start_x, end_x, end_y) {
-            return false
-        }
+        // if !row_is_valid(&map, start_x, end_x, start_y) || !row_is_valid(&map, start_x, end_x, end_y) {
+        //     return false
+        // }
 
-        if !column_is_valid(map.clone(), start_y, end_y, start_x) || !column_is_valid(map.clone(), start_y, end_y, end_x) {
-            return false
+        // if !column_is_valid(map.clone(), start_y, end_y, start_x) || !column_is_valid(map.clone(), start_y, end_y, end_x) {
+        //     return false
+        // }
+
+        // Check all four corners (and assume there aren't any weird "dip" in bits, which could invalidate a possibly valid sltn)
+
+        let corner1 = &self.loc1;
+        let corner2 = &self.loc2;
+
+        let corner3 = &TwoDimensionalLocation{x: self.loc1.x, y: self.loc2.y};
+        let corner4 = &TwoDimensionalLocation{x: self.loc2.x, y: self.loc1.y};
+
+        let corners = [corner1, corner2, corner3, corner4];
+
+        for corner in corners {
+            if !check_location_in_loop(map, corner) {
+                return false;
+            }
         }
 
         return true
@@ -64,7 +80,7 @@ impl TwoDimensionalLocationPair {
 
 fn column_is_valid(map: HashMap<u64, HashMap<u64, Tile>>, start_y: u64, end_y: u64, x: u64) -> bool {
     for j in start_y..end_y+1 {
-        if get_map_location(&map, x, j) == Tile::Empty {
+        if !check_in_loop(&map, x, j) {
             return false;
         }
     }
@@ -73,7 +89,7 @@ fn column_is_valid(map: HashMap<u64, HashMap<u64, Tile>>, start_y: u64, end_y: u
 
 fn row_is_valid(map: &HashMap<u64, HashMap<u64, Tile>>, start_x: u64, end_x: u64, y: u64) -> bool {
     for i in start_x..end_x+1 {
-        if get_map_location(&map, i, y) == Tile::Empty {
+        if !check_in_loop(&map, i, y) {
             return false;
         }
     }
@@ -164,6 +180,83 @@ fn get_map_location(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> T
     return x_val.clone()
 }
 
+fn check_location_in_loop(map: &HashMap<u64, HashMap<u64, Tile>>, location: &TwoDimensionalLocation) -> bool {
+    return check_in_loop(map, location.x as u64, location.y as u64)
+}
+
+fn check_in_loop(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
+    // Either the current location needs to be a red or green tile (not empty)
+    // Or there needs to be a red or green tile in all 4 cardinal directions.
+
+
+    if get_map_location(map, x, y) != Tile::Empty {
+        return true;
+    }
+
+    if check_above(map, x, y) && check_below(map, x, y) && check_left(map, x, y) && check_right(map, x, y) {
+        return true;
+    }
+
+    return false;
+}
+
+fn check_below(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
+    let mut y_map_keys: Vec<&u64> = map.keys().collect();
+
+    y_map_keys.sort();
+    y_map_keys.reverse();
+    let max_y = y_map_keys[0];
+
+
+    for j in y..*max_y+1 {
+        if get_map_location(map, x, j) != Tile::Empty {
+            return true
+        }
+    }
+    println!("Below was false");
+    return false
+}
+
+fn check_above(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
+    for j in 0..y {
+        if get_map_location(map, x, j) != Tile::Empty {
+            return true
+        }
+    }
+    println!("Above was false");
+    return false
+}
+
+fn check_left(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
+    for i in 0..x {
+        if get_map_location(map, i, y) != Tile::Empty {
+            return true
+        }
+    }
+    println!("Left was false");
+    return false
+}
+
+fn check_right(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
+    let empty_map = &HashMap::new();
+    let x_map = map.get(&y).unwrap_or(empty_map);
+    let mut x_map_keys: Vec<&u64> = x_map.keys().collect();
+
+    x_map_keys.sort();
+    x_map_keys.reverse();
+    let max_x = x_map_keys[0];
+
+    for i in x..*max_x+1 {
+        // println!("Right checking {i} {y}");
+        if get_map_location(map, i, y) != Tile::Empty {
+            return true
+        }
+    }
+    println!("Right was false for {x}, {y}, max_x is {max_x}");
+    return false
+}
+
+
 fn generate_map(contents: &str) -> HashMap<u64, HashMap<u64, Tile>> {
     // Map contains location - 1 index with red or green for tile colour
     let mut map: HashMap<u64, HashMap<u64, Tile>> = HashMap::new();
@@ -216,43 +309,6 @@ fn sort_values(v1: u64, v2: u64) -> (u64, u64) {
     return (v1, v2)
 }
 
-fn flood_fill(mut map: HashMap<u64, HashMap<u64, Tile>>) -> HashMap<u64, HashMap<u64, Tile>> {
-    let map_size = map.len();
-    for (i, row) in map.values_mut().enumerate() {
-        println!("Working on row {row:?} i: {i}/{map_size}");
-
-        if row.len() == 0 {
-            continue
-        }
-
-        let mut row_values: Vec<&u64> = row.keys().collect();
-        row_values.sort();
-
-        // Start with false, as we know first row value will flip this to true
-        let mut inside = false;
-
-
-        for i in *row_values[0]..*row_values[row_values.len()-1] {
-
-            // If its already true, then that means this is a wall, so flip to off if we were already inside
-            let val = row.get(&i);
-
-            let value = val.unwrap_or(&Tile::Empty);
-            if (value == &Tile::Green || value == &Tile::Red) && row.get(&(i-1)).unwrap_or(&Tile::Empty) == &Tile::Empty {
-                inside = !inside;
-                continue
-            }
-
-            if inside && value != &Tile::Red {
-                row.insert(i, Tile::Green);
-            }
-
-        }
-
-    }
-    return map;
-
-}
 
 fn split_line(line: &str) -> (u64, u64) {
     let split_line: Vec<&str> = line.split(",").collect();
@@ -296,15 +352,11 @@ fn create_display_map(map: &HashMap<u64, HashMap<u64, Tile>>) -> String {
 fn part2(contents: &String) -> Option<Answer> {
     // First generate map of all "in" and "out" positions
     println!("Generating map...");
-    let mut map: HashMap<u64, HashMap<u64, Tile>> = generate_map(contents);
-
-    println!("Flood filling map...");
-    // Then flood fill it
-    map = flood_fill(map);
+    let map: HashMap<u64, HashMap<u64, Tile>> = generate_map(contents);
 
     println!("Display map...");
-    // let out_string = create_display_map(&map);
-    // println!("{out_string}");
+    let out_string = create_display_map(&map);
+    println!("{out_string}");
 
     println!("Parsing locations...");
     // Generate all the pairs, same as part1
@@ -317,8 +369,9 @@ fn part2(contents: &String) -> Option<Answer> {
     pairs.reverse();
 
     // Check the largest is valid, try next down until a valid one is found
-    for pair in pairs {
-        println!("Checking pair {pair:?}...");
+    let len_pairs = pairs.len();
+    for (i, pair) in pairs.iter().enumerate() {
+        println!("Checking pair {pair:?}... {i}/{len_pairs}");
         if pair.is_valid(&map) {
             let answer = pair.calculate_square_size() as u64;
             return Some(Answer { answer });
@@ -334,6 +387,7 @@ fn part2(contents: &String) -> Option<Answer> {
 
 
 // Part 2 attempted answers
+// 4474437111
 
 fn main() {
     let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
@@ -431,32 +485,6 @@ mod tests {
         assert_eq!(first_line_actual.len(), first_line_expected.len());
 
         assert_eq!(expected_map_pre_fill, display_map);
-    }
-
-    #[test]
-    fn test_part2_floodfill() {
-        let setup = Setup::new();
-        let contents = &setup.contents;
-        let mut map: HashMap<u64, HashMap<u64, Tile>> = generate_map(contents);
-        map = flood_fill(map);
-
-        let display_map= create_display_map(&map);
-
-        println!("{display_map}");
-
-        let expected_map = "..............
-.......#XXX#..
-.......XXXXX..
-..#XXXX#XXXX..
-..XXXXXXXXXX..
-..#XXXXXX#XX..
-.........XXX..
-.........#X#..
-..............
-";
-
-
-        assert_eq!(expected_map, display_map);
     }
 
 
