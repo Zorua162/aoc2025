@@ -46,61 +46,36 @@ impl TwoDimensionalLocationPair {
     }
     
     fn is_valid(&self, pairs: &Vec<TwoDimensionalLocationPair>) -> bool {
-        // Check every outer value of the square made by the pair, if map shows red or green for it then it is valid, otherwise its not valid
-        // let (start_x, end_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
-        // let (start_y, end_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
+        let (start_x, end_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
+        let (start_y, end_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
 
-        // if !row_is_valid(&map, start_x, end_x, start_y) || !row_is_valid(&map, start_x, end_x, end_y) {
-        //     return false
-        // }
+        // Loop through each position in the square, and check if it is inside atleast one pair
 
-        // if !column_is_valid(map.clone(), start_y, end_y, start_x) || !column_is_valid(map.clone(), start_y, end_y, end_x) {
-        //     return false
-        // }
-
-        // return true
-
-
-        // Generate other corners, then if those corners match one of the other locations then this is valid
-
-        let pos1 = TwoDimensionalLocation{ x: self.loc2.x, y: self.loc1.y};
-        let pos2 = TwoDimensionalLocation{ x: self.loc1.x, y: self.loc2.y};
-
-        for pair in pairs {
-            let list_pos1 = &pair.loc1;
-            let list_pos2 = &pair.loc2;
-
-            if pos1 == *list_pos1 || pos1 == *list_pos2 || pos2 == *list_pos1 || pos2 == *list_pos2 {
-                return true;
+        for j in start_y..end_y {
+            for i in start_x..end_x {
+                    if !pairs_contain_point(pairs, i, j) {
+                        return false;
+                    }
+                }
             }
-        }
 
-        return false;
+        return true;
+    }
+    
+    fn contains_point(&self, i: u64, j: u64) -> bool {
+        let (low_x, high_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
+        let (low_y, high_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
+        return i >= low_x && i <= high_x && j >= low_y && j <= high_y;
     }
 }
 
-fn column_is_valid(map: HashMap<u64, HashMap<u64, Tile>>, start_y: u64, end_y: u64, x: u64) -> bool {
-    for j in start_y..end_y+1 {
-        if !location_is_inside(&map, x, j) {
-            return false;
+fn pairs_contain_point(pairs: &Vec<TwoDimensionalLocationPair>, x: u64, y: u64) -> bool {
+    for pair in pairs {
+        if pair.contains_point(x, y) {
+            return true;
         }
     }
-    return true;
-}
-
-fn row_is_valid(map: &HashMap<u64, HashMap<u64, Tile>>, start_x: u64, end_x: u64, y: u64) -> bool {
-    for i in start_x..end_x+1 {
-        if !location_is_inside(&map, i, y) {
-            return false;
-        }
-    }
-    return true;
-}
-
-fn location_is_inside(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
-
-    // Search up first
-    todo!()
+    return false;
 }
 
 impl PartialOrd for TwoDimensionalLocationPair {
@@ -237,44 +212,6 @@ fn sort_values(v1: u64, v2: u64) -> (u64, u64) {
         return (v2, v1)
     }
     return (v1, v2)
-}
-
-fn flood_fill(mut map: HashMap<u64, HashMap<u64, Tile>>) -> HashMap<u64, HashMap<u64, Tile>> {
-    let map_size = map.len();
-    for (i, row) in map.values_mut().enumerate() {
-        println!("Working on row {row:?} i: {i}/{map_size}");
-
-        if row.len() == 0 {
-            continue
-        }
-
-        let mut row_values: Vec<&u64> = row.keys().collect();
-        row_values.sort();
-
-        // Start with false, as we know first row value will flip this to true
-        let mut inside = false;
-
-
-        for i in *row_values[0]..*row_values[row_values.len()-1] {
-
-            // If its already true, then that means this is a wall, so flip to off if we were already inside
-            let val = row.get(&i);
-
-            let value = val.unwrap_or(&Tile::Empty);
-            if (value == &Tile::Green || value == &Tile::Red) && row.get(&(i-1)).unwrap_or(&Tile::Empty) == &Tile::Empty {
-                inside = !inside;
-                continue
-            }
-
-            if inside && value != &Tile::Red {
-                row.insert(i, Tile::Green);
-            }
-
-        }
-
-    }
-    return map;
-
 }
 
 fn split_line(line: &str) -> (u64, u64) {
@@ -457,32 +394,6 @@ mod tests {
         assert_eq!(first_line_actual.len(), first_line_expected.len());
 
         assert_eq!(expected_map_pre_fill, display_map);
-    }
-
-    #[test]
-    fn test_part2_floodfill() {
-        let setup = Setup::new();
-        let contents = &setup.contents;
-        let mut map: HashMap<u64, HashMap<u64, Tile>> = generate_map(contents);
-        map = flood_fill(map);
-
-        let display_map= create_display_map(&map);
-
-        println!("{display_map}");
-
-        let expected_map = "..............
-.......#XXX#..
-.......XXXXX..
-..#XXXX#XXXX..
-..XXXXXXXXXX..
-..#XXXXXX#XX..
-.........XXX..
-.........#X#..
-..............
-";
-
-
-        assert_eq!(expected_map, display_map);
     }
 
 
