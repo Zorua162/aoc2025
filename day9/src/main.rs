@@ -71,11 +71,22 @@ impl TwoDimensionalLocationPair {
         let (start_x, end_x) = sort_values(self.loc1.x as u64, self.loc2.x as u64);
         let (start_y, end_y) = sort_values(self.loc1.y as u64, self.loc2.y as u64);
 
-        if !row_is_valid(&map, start_x, end_x, start_y) || !row_is_valid(&map, start_x, end_x, end_y) {
+        println!("Starting row 1");
+        if !row_is_valid(&map, start_x, end_x, start_y) {
+            return false
+        }
+        println!("Starting row 2");
+        if !row_is_valid(&map, start_x, end_x, end_y) {
             return false
         }
 
-        if !column_is_valid(map.clone(), start_y, end_y, start_x) || !column_is_valid(map.clone(), start_y, end_y, end_x) {
+        println!("Starting column 1");
+        if !column_is_valid(&map, start_y, end_y, start_x) {
+            return false
+        }
+
+        println!("Starting column 2");
+        if !column_is_valid(&map, start_y, end_y, end_x) {
             return false
         }
 
@@ -83,21 +94,30 @@ impl TwoDimensionalLocationPair {
     }
 }
 
-fn column_is_valid(map: HashMap<u64, HashMap<u64, Tile>>, start_y: u64, end_y: u64, x: u64) -> bool {
+fn column_is_valid(map: &HashMap<u64, HashMap<u64, Tile>>, start_y: u64, end_y: u64, x: u64) -> bool {
+
+    let mut pb = ProgressBar::new(end_y-start_y);
+    pb.format("╢▌▌░╟");
     for j in start_y..end_y+1 {
+        pb.inc();
         if !check_in_loop(&map, x, j) {
             return false;
         }
     }
+    pb.finish_print("done");
     return true;
 }
 
 fn row_is_valid(map: &HashMap<u64, HashMap<u64, Tile>>, start_x: u64, end_x: u64, y: u64) -> bool {
+    let mut pb = ProgressBar::new(end_x-start_x);
+    pb.format("╢▌▌░╟");
     for i in start_x..end_x+1 {
+        pb.inc();
         if !check_in_loop(&map, i, y) {
             return false;
         }
     }
+    pb.finish_print("done");
     return true;
 }
 
@@ -193,45 +213,23 @@ fn check_in_loop(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool
     // Either the current location needs to be a red or green tile (not empty)
     // Or there needs to be a red or green tile in all 4 cardinal directions.
 
-
     if get_map_location(map, x, y) != Tile::Empty {
         return true;
     }
 
-    if check_above(map, x, y) && check_below(map, x, y) && check_left(map, x, y) && check_right(map, x, y) {
+    let mut y_map_keys: Vec<&u64> = map.keys().collect();
+
+    y_map_keys.sort();
+    let min_y = y_map_keys[0];
+
+    y_map_keys.reverse();
+    let max_y = y_map_keys[0];
+
+    if min_y <= &y && max_y >= &y && check_left(map, x, y) && check_right(map, x, y) {
         return true;
     }
 
     return false;
-}
-
-fn check_below(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
-    let mut y_map_keys: Vec<&u64> = map.keys().collect();
-
-    y_map_keys.sort();
-    y_map_keys.reverse();
-    let max_y = y_map_keys[0];
-
-    if max_y >= &y {
-        return true;
-    }
-
-    println!("Below was false");
-    return false
-}
-
-fn check_above(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
-    let mut y_map_keys: Vec<&u64> = map.keys().collect();
-
-    y_map_keys.sort();
-
-    let min_y = y_map_keys[0];
-
-    if min_y <= &y {
-        return true;
-    }
-    println!("Above was false");
-    return false
 }
 
 fn check_left(map: &HashMap<u64, HashMap<u64, Tile>>, x: u64, y: u64) -> bool {
