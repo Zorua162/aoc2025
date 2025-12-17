@@ -67,10 +67,10 @@ fn parse_locations(contents: &String) -> Vec<TwoDimensionalLocation> {
     return locations;
 }
 
-fn create_pairs(locations: Vec<TwoDimensionalLocation>) -> Vec<TwoDimensionalLocationPair> {
+fn create_pairs(locations: &Vec<TwoDimensionalLocation>) -> Vec<TwoDimensionalLocationPair> {
     let mut out_pairs: Vec<TwoDimensionalLocationPair> = vec![];
-    for location in &locations {
-        for other_location in &locations {
+    for location in locations {
+        for other_location in locations {
             if location == other_location {
                 continue;
             }
@@ -88,7 +88,7 @@ fn create_pairs(locations: Vec<TwoDimensionalLocation>) -> Vec<TwoDimensionalLoc
 fn part1(contents: &String) -> Option<Answer> {
     let locations: Vec<TwoDimensionalLocation> = parse_locations(contents);
 
-    let mut pairs: Vec<TwoDimensionalLocationPair> = create_pairs(locations);
+    let mut pairs: Vec<TwoDimensionalLocationPair> = create_pairs(&locations);
 
     pairs.sort();
     pairs.reverse();
@@ -106,19 +106,95 @@ fn part2(contents: &String) -> Option<Answer> {
     let locations: Vec<TwoDimensionalLocation> = parse_locations(contents);
 
     println!("Creating pairs...");
-    let mut pairs: Vec<TwoDimensionalLocationPair> = create_part2_pairs(locations);
+    // let mut pairs: Vec<TwoDimensionalLocationPair> = create_part2_pairs(locations);
+    let mut pairs: Vec<TwoDimensionalLocationPair> = create_pairs(&locations);
+
+
+    let total_pairs = pairs.len();
+    println!("There were {total_pairs} total pairs");
+
+    pairs = filter_pairs(&locations, pairs);
 
     // Output largest valid square
 
     pairs.sort();
     pairs.reverse();
 
+    let num_pairs = pairs.len();
+    
+    println!("There were {num_pairs} valid pairs");
+
+    for pair in &pairs[..9] {
+        let size = pair.calculate_square_size();
+        println!("For pair {pair:?} size is {size}")
+    }
+
     let answer = pairs[0].calculate_square_size() as u64;
 
     return Some(Answer { answer });
 }
 
-fn create_part2_pairs(mut locations: Vec<TwoDimensionalLocation>) -> Vec<TwoDimensionalLocationPair> {
+fn filter_pairs(
+    locations: &Vec<TwoDimensionalLocation>,
+    pairs: Vec<TwoDimensionalLocationPair>,
+) -> Vec<TwoDimensionalLocationPair> {
+    let mut out_pairs = vec![];
+    for pair in pairs {
+        // let pair_size = pair.calculate_square_size();
+        // println!("Checking pair {pair:?} with size {pair_size}");
+
+        if check_valid_pair(&pair, locations) {
+            out_pairs.push(pair);
+        }
+    }
+    return out_pairs;
+}
+
+fn check_valid_pair(
+    pair: &TwoDimensionalLocationPair,
+    locations: &[TwoDimensionalLocation],
+) -> bool {
+    for location in locations {
+        if location == &pair.loc1 || location == &pair.loc2 {
+            continue;
+        }
+
+        if location_inside_pair(location, pair) {
+            // println!("{pair:?} is invalid due to {location:?}");
+            return false;
+        }
+    }
+    return true;
+}
+
+fn location_inside_pair(
+    location: &TwoDimensionalLocation,
+    pair: &TwoDimensionalLocationPair,
+) -> bool {
+    let (low_x, high_x) = sort_values(pair.loc1.x, pair.loc2.x);
+    let (low_y, high_y) = sort_values(pair.loc1.y, pair.loc2.y);
+    if location.x <= low_x || location.x > high_x {
+        return false;
+    }
+
+    if location.y <= low_y || location.y > high_y {
+        return false;
+    }
+
+    return true;
+}
+
+fn sort_values(v1: i64, v2: i64) -> (i64, i64) {
+    if v1 > v2 {
+        return (v2, v1);
+    }
+    return (v1, v2);
+}
+
+#[allow(dead_code)]
+fn create_part2_pairs(
+    mut locations: Vec<TwoDimensionalLocation>,
+) -> Vec<TwoDimensionalLocationPair> {
     // Instead of pairs we look at the triples that are next to each other
     // And only every other triple is valid.
 
@@ -164,7 +240,7 @@ fn is_left_turn(
     location3: &TwoDimensionalLocation,
 ) -> bool {
     // Its a left turn if the following:
-    // Left     
+    // Left
     // -diff1_x       -diff2_y
     // +diff1_x       +diff2_y
     // -diff1_y       -diff2_x
@@ -178,26 +254,26 @@ fn is_left_turn(
 
     if diff1_x == 0 {
         // For both -diff1_y and +diff1_y they are left if -diff2_x
-        if diff2_x < 0{
+        if diff2_x < 0 {
             return true;
         }
-
     } else {
         // -x or +x
         if diff1_x < 0 && diff2_y < 0 {
             return true;
-        } else if diff1_x > 0 && diff2_y >0 {
+        } else if diff1_x > 0 && diff2_y > 0 {
             return true;
         }
     }
 
     // Otherwise it is a right turn
-    return false
+    return false;
 }
 
 // Part 2 attempted answers
 
 // 192570426 too low
+// 4474437111 too high
 
 fn main() {
     let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
