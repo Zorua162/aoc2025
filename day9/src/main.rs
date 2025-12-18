@@ -229,7 +229,7 @@ fn line_cross_vertical_on_pair(
     location: &TwoDimensionalLocation,
     prev_loc: &TwoDimensionalLocation,
 ) -> bool {
-    let (tile_x_low, tile_x_high) = sort_values(location.x, prev_loc.x);
+    let (tile_x_low, _tile_x_high) = sort_values(location.x, prev_loc.x);
     let (tile_y_low, tile_y_high) = sort_values(location.y, prev_loc.y);
 
     let (x_low, x_high) = sort_values(x1, x2);
@@ -254,7 +254,7 @@ fn line_cross_horizontal_on_pair(
     prev_loc: &TwoDimensionalLocation,
 ) -> bool {
     let (tile_x_low, tile_x_high) = sort_values(location.x, prev_loc.x);
-    let (tile_y_low, tile_y_high) = sort_values(location.y, prev_loc.y);
+    let (tile_y_low, _tile_y_high) = sort_values(location.y, prev_loc.y);
 
     let (y_low, y_high) = sort_values(y1, y2);
 
