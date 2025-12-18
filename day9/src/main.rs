@@ -197,13 +197,13 @@ fn crosses_line(
 
     //_ (for the pair)
     if line_cross_vertical_on_pair(x1, x2, y1, location, prev_loc) {
-        println!("{pair:?} is crossed by the line between {location:?} and {prev_loc:?}\n vert");
+        println!("{pair:?} is crossed by the line between {location:?} and {prev_loc:?}\n vert y is y1: {y1}");
         return true;
     }
 
     //_
     if line_cross_vertical_on_pair(x1, x2, y2, location, prev_loc) {
-        println!("{pair:?} is crossed by the line between {location:?} and {prev_loc:?}\n vert");
+        println!("{pair:?} is crossed by the line between {location:?} and {prev_loc:?}\n vert y is y2: {y2}");
         return true;
     }
 
@@ -223,21 +223,28 @@ fn crosses_line(
 }
 
 fn line_cross_vertical_on_pair(
-    x1: i64,
-    x2: i64,
-    y1: i64,
-    location: &TwoDimensionalLocation,
-    prev_loc: &TwoDimensionalLocation,
+    pair_x1: i64,
+    pair_x2: i64,
+    pair_y: i64,
+    tile_line_start: &TwoDimensionalLocation,
+    tile_line_end: &TwoDimensionalLocation,
 ) -> bool {
-    let (tile_x_low, _tile_x_high) = sort_values(location.x, prev_loc.x);
+
+    let tile_x = location.x;
+
     let (tile_y_low, tile_y_high) = sort_values(location.y, prev_loc.y);
 
     let (x_low, x_high) = sort_values(x1, x2);
 
-    // println!("y1 is {y1} tile_y_high is {tile_y_high} tile_y_low is {tile_y_low}");
-    if y1 < tile_y_high && y1 > tile_y_low {
+    if tile_y_high == 9 {
+        // println!("y1 is {y1} tile_y_high is {tile_y_high} tile_y_low is {tile_y_low}");
+        // println!("tile_x_low is {tile_x_low} x_low is {x_low} x_high is {x_high}");
+    }
 
-        if tile_x_low > x_low && tile_x_low < x_high {
+    if y >= tile_y_high && y <= tile_y_low {
+
+        if tile_x > x_low && tile_x < x_high {
+            println!("tile_x_low is {tile_x} x_low is {x_low} x_high is {x_high}");
             return true;
         }
 
@@ -249,19 +256,24 @@ fn line_cross_vertical_on_pair(
 fn line_cross_horizontal_on_pair(
     y1: i64,
     y2: i64,
-    x1: i64,
+    x: i64,
     location: &TwoDimensionalLocation,
     prev_loc: &TwoDimensionalLocation,
 ) -> bool {
-    let (tile_x_low, tile_x_high) = sort_values(location.x, prev_loc.x);
-    let (tile_y_low, _tile_y_high) = sort_values(location.y, prev_loc.y);
+    if location.y != prev_loc.y {
+        return false
+    }
+
+    let tile_y = location.y;
+
+    let (tile_x_low, tile_x_high) = sort_values(location.y, prev_loc.y);
 
     let (y_low, y_high) = sort_values(y1, y2);
 
     // println!("y1 is {y1} tile_y_high is {tile_y_high} tile_y_low is {tile_y_low}");
-    if x1 < tile_x_high && x1 > tile_x_low {
+    if x >= tile_x_high && x <= tile_x_low {
 
-        if tile_y_low > y_low && tile_y_low < y_high {
+        if tile_y > y_low && tile_y < y_high {
             return true;
         }
 
@@ -276,11 +288,11 @@ fn location_inside_pair(
 ) -> bool {
     let (low_x, high_x) = sort_values(pair.loc1.x, pair.loc2.x);
     let (low_y, high_y) = sort_values(pair.loc1.y, pair.loc2.y);
-    if location.x <= low_x || location.x > high_x {
+    if location.x <= low_x || location.x >= high_x {
         return false;
     }
 
-    if location.y <= low_y || location.y > high_y {
+    if location.y <= low_y || location.y >= high_y {
         return false;
     }
 
@@ -374,11 +386,12 @@ fn is_left_turn(
 }
 
 // Part 2 attempted answers
-
-// 192570426 too low
-// 4474437111 too high
-// 97190472 (too low?)
-// 1289405152
+// 1 Lost
+// 2 192570426 too low
+// 3 4474437111 too high
+// 4 97190472 (too low?)
+// 5 1289405152
+// 6 1276381001
 
 async fn draw_map(locations: &Vec<TwoDimensionalLocation>, out_pair: &TwoDimensionalLocationPair) {
     loop {
@@ -388,6 +401,9 @@ async fn draw_map(locations: &Vec<TwoDimensionalLocation>, out_pair: &TwoDimensi
         let mut min_y = f32::MAX;
         let mut max_x = 0.0;
         let mut max_y = 0.0;
+
+        // let thickness_multiplier = 100.0;
+        let thickness_multiplier = 0.01;
 
         for location in locations {
             if (location.x as f32) < min_x {
@@ -407,23 +423,23 @@ async fn draw_map(locations: &Vec<TwoDimensionalLocation>, out_pair: &TwoDimensi
                 prev_location.y as f32,
                 location.x as f32,
                 location.y as f32,
-                300.0,
+                3.0*thickness_multiplier,
                 BLUE,
             );
             prev_location = location;
         }
 
-            let width = (out_pair.loc2.x - out_pair.loc1.x) as f32;
-            let height = (out_pair.loc2.y - out_pair.loc1.y) as f32;
-            draw_rectangle(
-                out_pair.loc1.x as f32,
-                out_pair.loc1.y as f32,
-                width,
-                height,
-                RED,
-            );
-            draw_circle(out_pair.loc1.x as f32, out_pair.loc1.y as f32, 900.0, GREEN);
-            draw_circle(out_pair.loc2.x as f32, out_pair.loc2.y as f32, 900.0, GREEN);
+            // let width = (out_pair.loc2.x - out_pair.loc1.x) as f32;
+            // let height = (out_pair.loc2.y - out_pair.loc1.y) as f32;
+            // draw_rectangle(
+            //     out_pair.loc1.x as f32,
+            //     out_pair.loc1.y as f32,
+            //     width,
+            //     height,
+            //     RED,
+            // );
+            draw_circle(out_pair.loc1.x as f32, out_pair.loc1.y as f32, 9.0*thickness_multiplier, GREEN);
+            draw_circle(out_pair.loc2.x as f32, out_pair.loc2.y as f32, 9.0*thickness_multiplier, GREEN);
 
         // draw_line(40.0, 40.0, 100.0, 200.0, 1.0, BLUE);
         let camera = fit_camera_to_bounds(min_x, min_y, max_x, max_y);
@@ -440,10 +456,11 @@ fn fit_camera_to_bounds(min_x: f32, min_y: f32, max_x: f32, max_y: f32) -> Camer
 
     // Center of the world
     let center_x = (max_x - min_x) * 0.5;
-    let center_y = (max_y - min_y) * 4.0;
-    let mut target = vec2(center_x, center_y);
-    let nudge = vec2(0.0, 50000.0);
-    target += nudge;
+    let center_y = (max_y - min_y) * 0.5;
+    let target = vec2(center_x, center_y);
+    // let mut target = vec2(center_x, center_y);
+    // let nudge = vec2(0.0, 50000.0);
+    // target += nudge;
 
     // Zoom to fit bounds
     let zoom = (screen_width() / width).min(screen_height() / height);
@@ -457,7 +474,29 @@ fn fit_camera_to_bounds(min_x: f32, min_y: f32, max_x: f32, max_y: f32) -> Camer
 
 #[macroquad::main("Display")]
 async fn main() {
-    let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
+    let _contents = LocalFileInputGetter { path: "input.txt" }.get_input();
+    let contents = "1,1
+9,1
+9,9
+8,9
+8,10
+6,10
+6,9
+1,9
+1,5
+7,5
+7,4
+1,4"
+                .to_string();
+    let _contents = "7,1
+11,1
+11,7
+9,7
+9,5
+2,5
+2,3
+7,3".to_string();
+
 
     let do_part1 = false;
     let do_part2 = true;
@@ -521,6 +560,26 @@ mod tests {
         let (result, _, _) = part2(&contents);
         dbg!(&result);
         assert_eq!(result, Some(Answer { answer: 24 }));
+    }
+
+    #[ignore]
+    #[test]
+    fn test_part2_self_made() {
+        let contents = "1,1
+9,1
+9,9
+8,10
+6,10
+6,9
+1,9
+1,5
+7,5
+7,4
+1,4"
+                .to_string();
+        let (result, _, _) = part2(&contents);
+        dbg!(&result);
+        assert_eq!(result, Some(Answer { answer: 32 }));
     }
 
     #[ignore]
