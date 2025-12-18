@@ -237,7 +237,7 @@ fn line_cross_vertical_on_pair(
     // println!("y1 is {y1} tile_y_high is {tile_y_high} tile_y_low is {tile_y_low}");
     if y1 < tile_y_high && y1 > tile_y_low {
 
-        if tile_x_low < x_low && tile_x_low < x_high {
+        if tile_x_low > x_low && tile_x_low < x_high {
             return true;
         }
 
