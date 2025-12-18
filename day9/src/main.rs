@@ -1,3 +1,4 @@
+use macroquad::prelude::*;
 use std::{cmp::Ordering, fs};
 
 #[derive(Debug, PartialEq)]
@@ -100,7 +101,7 @@ fn part1(contents: &String) -> Option<Answer> {
 
 // Part 1 attempted answers
 
-fn part2(contents: &String) -> Option<Answer> {
+fn part2(contents: &String) -> (Option<Answer>, Vec<TwoDimensionalLocation>, Vec<TwoDimensionalLocationPair>) {
     println!("Parsing locations...");
     // Generate all the pairs, same as part1
     let locations: Vec<TwoDimensionalLocation> = parse_locations(contents);
@@ -108,7 +109,6 @@ fn part2(contents: &String) -> Option<Answer> {
     println!("Creating pairs...");
     // let mut pairs: Vec<TwoDimensionalLocationPair> = create_part2_pairs(locations);
     let mut pairs: Vec<TwoDimensionalLocationPair> = create_pairs(&locations);
-
 
     let total_pairs = pairs.len();
     println!("There were {total_pairs} total pairs");
@@ -121,7 +121,7 @@ fn part2(contents: &String) -> Option<Answer> {
     pairs.reverse();
 
     let num_pairs = pairs.len();
-    
+
     println!("There were {num_pairs} valid pairs");
 
     for pair in &pairs[..9] {
@@ -129,9 +129,10 @@ fn part2(contents: &String) -> Option<Answer> {
         println!("For pair {pair:?} size is {size}")
     }
 
-    let answer = pairs[0].calculate_square_size() as u64;
+    let out_pair = &pairs[0];
+    let answer = out_pair.calculate_square_size() as u64;
 
-    return Some(Answer { answer });
+    return (Some(Answer { answer }), locations, pairs);
 }
 
 fn filter_pairs(
@@ -164,7 +165,109 @@ fn check_valid_pair(
             return false;
         }
     }
+
+    // We've checked no locations inside, but they could go all the way
+    // across. So we need to check for these "overlaps"
+
+    // We do this by looping through all the locations and checking if
+    // they cross over any of the lines that make the pair
+
+    let mut prev_loc = &locations[locations.len() - 1];
+    for location in locations {
+        if crosses_line(pair, location, prev_loc) {
+            return false;
+        }
+
+        prev_loc = location;
+    }
+
     return true;
+}
+
+fn crosses_line(
+    pair: &TwoDimensionalLocationPair,
+    location: &TwoDimensionalLocation,
+    prev_loc: &TwoDimensionalLocation,
+) -> bool {
+    let x1 = pair.loc1.x;
+    let x2 = pair.loc2.x;
+
+    let y1 = pair.loc1.y;
+    let y2 = pair.loc2.y;
+
+    //_ (for the pair)
+    if line_cross_vertical_on_pair(x1, x2, y1, location, prev_loc) {
+        println!("{pair:?} is crossed by the line between {location:?} and {prev_loc:?}\n vert");
+        return true;
+    }
+
+    //_
+    if line_cross_vertical_on_pair(x1, x2, y2, location, prev_loc) {
+        println!("{pair:?} is crossed by the line between {location:?} and {prev_loc:?}\n vert");
+        return true;
+    }
+
+    // |
+    if line_cross_horizontal_on_pair(y1, y2, x1, location, prev_loc) {
+        println!("{pair:?} is crossed by the line between {location:?} and {prev_loc:?}\n hori {x1}");
+        return true;
+    }
+
+    // |
+    if line_cross_horizontal_on_pair(y1, y2, x2, location, prev_loc) {
+        println!("{pair:?} is crossed by the line between {location:?} and {prev_loc:?}\n hori {x2}");
+        return true;
+    }
+
+    return false;
+}
+
+fn line_cross_vertical_on_pair(
+    x1: i64,
+    x2: i64,
+    y1: i64,
+    location: &TwoDimensionalLocation,
+    prev_loc: &TwoDimensionalLocation,
+) -> bool {
+    let (tile_x_low, tile_x_high) = sort_values(location.x, prev_loc.x);
+    let (tile_y_low, tile_y_high) = sort_values(location.y, prev_loc.y);
+
+    let (x_low, x_high) = sort_values(x1, x2);
+
+    // println!("y1 is {y1} tile_y_high is {tile_y_high} tile_y_low is {tile_y_low}");
+    if y1 < tile_y_high && y1 > tile_y_low {
+
+        if tile_x_low < x_low && tile_x_low < x_high {
+            return true;
+        }
+
+    }
+
+    return false;
+}
+
+fn line_cross_horizontal_on_pair(
+    y1: i64,
+    y2: i64,
+    x1: i64,
+    location: &TwoDimensionalLocation,
+    prev_loc: &TwoDimensionalLocation,
+) -> bool {
+    let (tile_x_low, tile_x_high) = sort_values(location.x, prev_loc.x);
+    let (tile_y_low, tile_y_high) = sort_values(location.y, prev_loc.y);
+
+    let (y_low, y_high) = sort_values(y1, y2);
+
+    // println!("y1 is {y1} tile_y_high is {tile_y_high} tile_y_low is {tile_y_low}");
+    if x1 < tile_x_high && x1 > tile_x_low {
+
+        if tile_y_low > y_low && tile_y_low < y_high {
+            return true;
+        }
+
+    }
+
+    return false;
 }
 
 fn location_inside_pair(
@@ -274,9 +377,88 @@ fn is_left_turn(
 
 // 192570426 too low
 // 4474437111 too high
+// 97190472 (too low?)
+// 1289405152
 
-fn main() {
+async fn draw_map(locations: &Vec<TwoDimensionalLocation>, out_pair: &TwoDimensionalLocationPair) {
+    loop {
+        clear_background(WHITE);
+        let mut prev_location = &locations[locations.len() - 1];
+        let mut min_x = f32::MAX;
+        let mut min_y = f32::MAX;
+        let mut max_x = 0.0;
+        let mut max_y = 0.0;
+
+        for location in locations {
+            if (location.x as f32) < min_x {
+                min_x = location.x as f32;
+            }
+            if (location.y as f32) < min_y {
+                min_y = location.x as f32;
+            }
+            if (location.x as f32) > max_x {
+                max_x = location.x as f32;
+            }
+            if (location.y as f32) > max_y {
+                max_y = location.y as f32;
+            }
+            draw_line(
+                prev_location.x as f32,
+                prev_location.y as f32,
+                location.x as f32,
+                location.y as f32,
+                300.0,
+                BLUE,
+            );
+            prev_location = location;
+        }
+
+            let width = (out_pair.loc2.x - out_pair.loc1.x) as f32;
+            let height = (out_pair.loc2.y - out_pair.loc1.y) as f32;
+            draw_rectangle(
+                out_pair.loc1.x as f32,
+                out_pair.loc1.y as f32,
+                width,
+                height,
+                RED,
+            );
+            draw_circle(out_pair.loc1.x as f32, out_pair.loc1.y as f32, 900.0, GREEN);
+            draw_circle(out_pair.loc2.x as f32, out_pair.loc2.y as f32, 900.0, GREEN);
+
+        // draw_line(40.0, 40.0, 100.0, 200.0, 1.0, BLUE);
+        let camera = fit_camera_to_bounds(min_x, min_y, max_x, max_y);
+
+        set_camera(&camera);
+
+        next_frame().await
+    }
+}
+
+fn fit_camera_to_bounds(min_x: f32, min_y: f32, max_x: f32, max_y: f32) -> Camera2D {
+    let width = max_x - min_x;
+    let height = max_y - min_y;
+
+    // Center of the world
+    let center_x = (max_x - min_x) * 0.5;
+    let center_y = (max_y - min_y) * 4.0;
+    let mut target = vec2(center_x, center_y);
+    let nudge = vec2(0.0, 50000.0);
+    target += nudge;
+
+    // Zoom to fit bounds
+    let zoom = (screen_width() / width).min(screen_height() / height);
+
+    Camera2D {
+        target: target,
+        zoom: vec2(zoom / screen_width(), -zoom / screen_height()),
+        ..Default::default()
+    }
+}
+
+#[macroquad::main("Display")]
+async fn main() {
     let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
+
     let do_part1 = false;
     let do_part2 = true;
     if do_part1 {
@@ -285,7 +467,9 @@ fn main() {
     }
 
     if do_part2 {
-        let result2 = part2(&contents);
+        let (result2, locations, pairs) = part2(&contents);
+        let out_pair = &pairs[0];
+        draw_map(&locations, &out_pair).await;
         println!("Part2 result {result2:?}");
     }
 }
@@ -334,7 +518,8 @@ mod tests {
     fn test_part2_example() {
         let setup = Setup::new();
         let contents = &setup.contents;
-        let result = part2(&contents);
+        let (result, _, _) = part2(&contents);
+        dbg!(&result);
         assert_eq!(result, Some(Answer { answer: 24 }));
     }
 
@@ -342,7 +527,7 @@ mod tests {
     #[test]
     fn test_part2() {
         let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
-        let result = part2(&contents);
+        let (result, _, _) = part2(&contents);
         assert_eq!(result, Some(Answer { answer: 2341 }));
     }
 }
