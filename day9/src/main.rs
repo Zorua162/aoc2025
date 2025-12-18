@@ -200,7 +200,7 @@ fn crosses_line(
         let (low_pair_y, high_pair_y) = sort_values(pair_loc1.y, pair_loc2.y);
 
         // Doing pair_loc1
-        if pair_loc1.x > low_tile_x && pair_loc1.x < high_tile_x {
+        if pair_loc1.x >= low_tile_x && pair_loc1.x <= high_tile_x {
             if tile_line_loc1.y > low_pair_y && tile_line_loc1.y < high_pair_y {
                 return true
             }
@@ -327,6 +327,7 @@ fn is_left_turn(
 // 4 97190472 (too low?)
 // 5 1289405152
 // 6 1276381001
+// 7 1289195182
 
 async fn draw_map(locations: &Vec<TwoDimensionalLocation>, out_pair: &TwoDimensionalLocationPair) {
     loop {
@@ -410,6 +411,7 @@ fn fit_camera_to_bounds(min_x: f32, min_y: f32, max_x: f32, max_y: f32) -> Camer
 #[macroquad::main("Display")]
 async fn main() {
     let contents = LocalFileInputGetter { path: "input.txt" }.get_input();
+    // self made
     let _contents = "1,1
 9,1
 9,9
@@ -423,6 +425,7 @@ async fn main() {
 7,4
 1,4"
                 .to_string();
+    // example
     let _contents = "7,1
 11,1
 11,7
