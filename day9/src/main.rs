@@ -223,11 +223,11 @@ fn location_inside_pair(
 ) -> bool {
     let (low_x, high_x) = sort_values(pair.loc1.x, pair.loc2.x);
     let (low_y, high_y) = sort_values(pair.loc1.y, pair.loc2.y);
-    if location.x <= low_x || location.x >= high_x {
+    if location.x < low_x || location.x > high_x {
         return false;
     }
 
-    if location.y <= low_y || location.y >= high_y {
+    if location.y < low_y || location.y > high_y {
         return false;
     }
 
@@ -329,7 +329,7 @@ fn is_left_turn(
 // 6 1276381001
 // 7 1289195182
 
-async fn draw_map(locations: &Vec<TwoDimensionalLocation>, out_pair: &TwoDimensionalLocationPair) {
+async fn draw_map(locations: &Vec<TwoDimensionalLocation>, pairs: &Vec<TwoDimensionalLocationPair>) {
     loop {
         clear_background(WHITE);
         let mut prev_location = &locations[locations.len() - 1];
@@ -365,17 +365,23 @@ async fn draw_map(locations: &Vec<TwoDimensionalLocation>, out_pair: &TwoDimensi
             prev_location = location;
         }
 
-            // let width = (out_pair.loc2.x - out_pair.loc1.x) as f32;
-            // let height = (out_pair.loc2.y - out_pair.loc1.y) as f32;
-            // draw_rectangle(
-            //     out_pair.loc1.x as f32,
-            //     out_pair.loc1.y as f32,
-            //     width,
-            //     height,
-            //     RED,
-            // );
-            draw_circle(out_pair.loc1.x as f32, out_pair.loc1.y as f32, 9.0*thickness_multiplier, GREEN);
-            draw_circle(out_pair.loc2.x as f32, out_pair.loc2.y as f32, 9.0*thickness_multiplier, GREEN);
+            let out_pair = &pairs[0];
+            let width = (out_pair.loc2.x - out_pair.loc1.x) as f32;
+            let height = (out_pair.loc2.y - out_pair.loc1.y) as f32;
+            draw_rectangle(
+                out_pair.loc1.x as f32,
+                out_pair.loc1.y as f32,
+                width,
+                height,
+                RED,
+            );
+            let colours = vec![GREEN, BLUE, BLACK, RED, ORANGE, PURPLE, YELLOW, GRAY, LIGHTGRAY, LIME];
+
+
+            for (i, pair) in pairs[..9].iter().enumerate() {
+                draw_circle(pair.loc1.x as f32, pair.loc1.y as f32, 9.0*thickness_multiplier, colours[i]);
+                draw_circle(pair.loc2.x as f32, pair.loc2.y as f32, 9.0*thickness_multiplier, colours[i]);
+            }
 
         // draw_line(40.0, 40.0, 100.0, 200.0, 1.0, BLUE);
         let camera = fit_camera_to_bounds(min_x, min_y, max_x, max_y);
@@ -445,8 +451,7 @@ async fn main() {
 
     if do_part2 {
         let (result2, locations, pairs) = part2(&contents);
-        let out_pair = &pairs[0];
-        draw_map(&locations, &out_pair).await;
+        draw_map(&locations, &pairs).await;
         println!("Part2 result {result2:?}");
     }
 }
