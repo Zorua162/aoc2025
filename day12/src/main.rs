@@ -53,7 +53,7 @@ fn get_shape_counts(shapes: &Vec<Vec<&str>>) -> Vec<u64> {
     return shape_tile_counts
 }
 
-fn check_line(line: &str, shapes: &Vec<Vec<&str>>, shape_tile_counts: &Vec<u64>) -> bool {
+fn check_line(line: &str, _shapes: &Vec<Vec<&str>>, _shape_tile_counts: &Vec<u64>) -> bool {
     let split: Vec<&str> = line.split(": ").collect();
     
     // dbg!(&split);
@@ -72,7 +72,7 @@ fn check_line(line: &str, shapes: &Vec<Vec<&str>>, shape_tile_counts: &Vec<u64>)
     // Do an initial check to be sure that the number of tiles in the given shapes could fit in the boxes, to check if its worth trying the combinations...
 
     let mut reqd_tile_count = 0;
-    for (i, shape_count) in shape_list.iter().enumerate() {
+    for (_i, shape_count) in shape_list.iter().enumerate() {
         // reqd_tile_count += shape_count * shape_tile_counts[i];
         reqd_tile_count += shape_count * 9;
     }
