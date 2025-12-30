@@ -1,5 +1,8 @@
+#![allow(unused_variables, dead_code)]
+
 use macroquad::prelude::*;
 use std::{cmp::Ordering, fs};
+
 
 #[derive(Debug, PartialEq)]
 struct Answer {
@@ -130,6 +133,7 @@ fn part2(contents: &String) -> (Option<Answer>, Vec<TwoDimensionalLocation>, Vec
     }
 
     let out_pair = &pairs[0];
+    dbg!(&out_pair);
     let answer = out_pair.calculate_square_size() as u64;
 
     return (Some(Answer { answer }), locations, pairs);
@@ -140,20 +144,51 @@ fn filter_pairs(
     pairs: Vec<TwoDimensionalLocationPair>,
 ) -> Vec<TwoDimensionalLocationPair> {
     let mut out_pairs = vec![];
+
+
+    // Pre-compute what the vertical, and what the horizontal lines are
+
+    let (vertical_lines, horizontal_lines) = sort_lines(locations);
+
     for pair in pairs {
         // let pair_size = pair.calculate_square_size();
         // println!("Checking pair {pair:?} with size {pair_size}");
 
-        if check_valid_pair(&pair, locations) {
+        if check_valid_pair(&pair, locations, &vertical_lines, &horizontal_lines) {
             out_pairs.push(pair);
         }
     }
     return out_pairs;
 }
 
+fn sort_lines(locations: &[TwoDimensionalLocation]) -> (Vec<TwoDimensionalLocationPair>, Vec<TwoDimensionalLocationPair>) {
+    let mut vertical_lines = vec![];
+    let mut horizontal_lines = vec![];
+    let mut loc1 = &locations[locations.len()-1];
+
+
+    for loc2 in locations {
+
+        if loc1.x != loc2.x {
+            // Horizontal line
+            horizontal_lines.push(TwoDimensionalLocationPair { loc1: loc1.clone(), loc2: loc2.clone() })
+        } else {
+            // Vertical line
+            vertical_lines.push(TwoDimensionalLocationPair { loc1: loc1.clone(), loc2: loc2.clone() })
+        }
+
+        loc1 = loc2;        
+    }
+
+    return (vertical_lines, horizontal_lines)
+    
+}
+
 fn check_valid_pair(
     pair: &TwoDimensionalLocationPair,
     locations: &[TwoDimensionalLocation],
+    vertical_lines: &Vec<TwoDimensionalLocationPair>,
+    horizontal_lines: &Vec<TwoDimensionalLocationPair>
 ) -> bool {
     for location in locations {
         if location == &pair.loc1 || location == &pair.loc2 {
@@ -172,16 +207,46 @@ fn check_valid_pair(
     // We do this by looping through all the locations and checking if
     // they cross over any of the lines that make the pair
 
-    let mut prev_loc = &locations[locations.len() - 1];
-    for location in locations {
-        if crosses_line(pair, location, prev_loc) {
-            return false;
-        }
+    // let mut prev_loc = &locations[locations.len() - 1];
+    // for location in locations {
+    //     if crosses_line(pair, location, prev_loc) {
+    //         return false;
+    //     }
 
-        prev_loc = location;
+    //     prev_loc = location;
+    // }
+    if check_crosses_line(pair, vertical_lines, horizontal_lines) {
+        return false
     }
 
     return true;
+}
+
+fn check_crosses_line(pair: &TwoDimensionalLocationPair, vertical_lines: &[TwoDimensionalLocationPair], horizontal_lines: &[TwoDimensionalLocationPair]) -> bool {
+
+    // Check horizontal lines    
+
+    // for vertical_line in vertical_lines {
+    //     // First horizontal line in pair
+
+    //     // Second horizontal line in pair
+
+    // }
+    for horizontal_line in horizontal_lines {
+        let (low_y, high_y) = sort_values(pair.loc1.y, pair.loc2.y);
+        let (low_line_x, high_line_x) = sort_values(horizontal_line.loc1.x, horizontal_line.loc2.x);
+        let (low_pair_x, high_pair_x) = sort_values(pair.loc1.x, pair.loc2.x);
+        // First check if the y of this horizontal line, is within the y of the pair
+        if horizontal_line.loc1.y > low_y && horizontal_line.loc1.y < high_y {
+            // Now check, if the two sides of the line are *outside* the values of the pair, then this is an invalid square
+
+            if low_line_x <= low_pair_x && high_line_x >= high_pair_x {
+                return true
+            }
+        }
+    }
+
+    return false
 }
 
 fn crosses_line(
@@ -223,11 +288,11 @@ fn location_inside_pair(
 ) -> bool {
     let (low_x, high_x) = sort_values(pair.loc1.x, pair.loc2.x);
     let (low_y, high_y) = sort_values(pair.loc1.y, pair.loc2.y);
-    if location.x < low_x || location.x > high_x {
+    if location.x - 1 < low_x || location.x + 1 > high_x {
         return false;
     }
 
-    if location.y < low_y || location.y > high_y {
+    if location.y - 1 < low_y || location.y + 1 > high_y {
         return false;
     }
 
